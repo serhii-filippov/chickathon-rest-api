@@ -7,15 +7,9 @@ const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
 module.exports = {
-    
     addBot(req, res, next) {
 // send name, userId and devLanguage through body
         const { name, userId, devLanguage } = req.body;
-        // const { name, userId, devLanguage } = {
-        //     name: 'test name222',
-        //     userId: 1,
-        //     devLanguage: 'test devLanguage222'
-        // }
 
         return Bot
             .upsert({
