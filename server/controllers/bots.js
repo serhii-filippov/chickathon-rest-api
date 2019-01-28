@@ -12,14 +12,15 @@ module.exports = {
         const { name, userId, devLanguage } = req.body;
 
         return Bot
-            .upsert({
+            .create({
                 name: name,
                 userId: Number(userId),
                 devLanguage: devLanguage
             })
-            .then(() => {
+            .then(createdBot => {
                 req.createdBotObject = {
-                    botFileName: userId + '-' + name.split(' ').join(''),
+                    botId: createdBot.id,
+                    botFileName: String(userId) + '-' + name.split(' ').join('-'),
                     name: name,
                     userId: userId,
                     devLanguage: devLanguage
@@ -33,7 +34,6 @@ module.exports = {
         if (Object.keys(req.files).length == 0) {
             return res.status(400).send('No bot file was provided');
         }
-
 // botSourceFile is the name of the input field in the bot creation form
 // need to add ' encType="multipart/form-data" ' (without '') to the form attributes
         let botSourceFile = req.files.botSourceFile;
@@ -47,28 +47,71 @@ module.exports = {
         })        
     },
 
-    updateSourceFilePath(req, res, next) {
+    sourceUpload2(req, res, next) {
+        if (Object.keys(req.files).length == 0) {
+            return res.status(400).send('No bot file was provided');
+        }
+        console.log('вышел из if в sourceUpload2');
+// botSourceFile is the name of the input field in the bot creation form
+// need to add ' encType="multipart/form-data" ' (without '') to the form attributes
+
         return Bot
-            .findOne({
-                where: {
-                    name: req.createdBotObject.name,
-                    userId: req.createdBotObject.userId,
-                    devLanguage: req.createdBotObject.devLanguage
-                }
-            })
+            .findByPk(req.params.id)
             .then(bot => {
-                return bot
-                    .update({
-                        jarFile: req.createdBotObject.jarFile,
-                        jarFileUpdateDate: new Date()
-                    })
-                    .then(() => {
-                        res.status(200).send('Bot was created succsessfully. Source file uploaded. All is ok');
-                        next()
-                    })
-                    .catch(next)
+                let botSourceFile = req.files.botSourceFile;
+                let fileExtension = String('.' + botSourceFile.name.split('.').slice(-1));
+                const botFileName = String(bot.userId) + '-' + bot.name.split(' ').join('-');
+                const fileName = botFileName + fileExtension;
+                const jarFile = 'server/files/bots-sources/' + fileName;
+                console.log('jarFile = ', jarFile);
+                
+                botSourceFile.mv(jarFile, () => {
+                    req.createdBotObject = { jarFile };
+                    next();
+                })
             })
             .catch(next)
+    },
+
+    updateSourceFilePath(req, res, next) {
+// in case if bot was just created
+        if (!req.params.id) {
+            return Bot
+                .findOne({
+                    where: {
+                        name: req.createdBotObject.name,
+                        userId: req.createdBotObject.userId,
+                        devLanguage: req.createdBotObject.devLanguage
+                    }
+                })
+                .then(bot => {
+                    return bot
+                        .update({
+                            jarFile: req.createdBotObject.jarFile,
+                            jarFileUpdateDate: new Date()
+                        })
+                        .then(() => {
+                            res.status(200).send('Bot was created succsessfully. Source file uploaded. All is ok');
+                            next()
+                        })
+                        .catch(next)
+                })
+                .catch(next)
+// in case we want to update existing bot source file
+        } else {
+            return Bot
+                .findByPk(req.params.id)
+                .then(bot => {
+                    return bot
+                        .update({
+                            jarFile: req.createdBotObject.jarFile,
+                            jarFileUpdateDate: new Date()
+                        })
+                        .then(() => {
+                            res.send('Bot source file updated successfully');
+                        })
+                })
+        }
     },
 
     getBotsViaUserId(req, res, next) {
@@ -176,6 +219,9 @@ module.exports = {
             return Bot
                 .findByPk(req.params.id)
                 .then(bot => {
+                    req.createdBotObject = {
+                        botId: bot.id
+                    }
                     return bot
                         .update({
                             devRating: updatedDevRating
@@ -200,6 +246,9 @@ module.exports = {
             return Bot
                 .findByPk(req.params.id)
                 .then(bot => {
+                    req.createdBotObject = {
+                        botId: bot.id
+                    }
                     return bot
                         .update({
                             eventRating: updatedEventRating

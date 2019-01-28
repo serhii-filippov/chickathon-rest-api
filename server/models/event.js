@@ -7,7 +7,7 @@ const Event = sequelize.define('Event', {
   firstPlace: DataTypes.INTEGER,
   secondPlace: DataTypes.INTEGER,
   thirdPlace: DataTypes.INTEGER,
-  isEnded: Sequelize.BOOLEAN
+  isEnded: DataTypes.BOOLEAN
 }, {});
 
 module.exports = Event;

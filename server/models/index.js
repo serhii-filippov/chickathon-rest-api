@@ -16,28 +16,34 @@ const Event = require('./event');
 const Final = require('./final');
 const Log = require('./log');
 const User = require('./user');
+const BotsBattle = require('./botsbattle');
+const EventFinalist = require('./eventfinalist');
 
-User.hasMany(Bot, {
-  through: 'botsBattles'
+Bot.belongsToMany(Battle, {
+  through: 'BotsBattle',
+  foreignKey: 'botId',
+  otherKey: 'battleId'
 });
+Battle.belongsToMany(Bot, {
+  through: 'BotsBattle',
+  foreignKey: 'battleId',
+  otherKey: 'botId'
+});
+
 Bot.belongsTo(User, {
   foreignKey: 'userId'
 });
 
-Bot.belongsTo(Final);
-Bot.belongsToMany(Battle);
-Battle.belongsToMany(Bot, {
-  // ???
-  through: 'botsBattles',
-  as: 'bot1',
-  foreignKey: 'bot1Id'
+Final.belongsToMany(Event, {
+  through: 'EventFinalist',
+  foreignKey: 'finalistId',
+  otherKey: 'eventId'
 });
-Battle.belongsToMany(Bot, {
-  // ???
-  through: 'botsBattles',
-  as: 'bot2',
-  foreignKey: 'bot2Id'
-});''
+Event.belongsToMany(Final, {
+  through: 'EventFinalist',
+  foreignKey: 'eventId',
+  otherKey: 'finalistId'
+});
 
 Log.belongsTo(Bot, {
   foreignKey: 'botId'
@@ -49,30 +55,7 @@ Log.belongsTo(Event, {
   foreignKey: 'eventId'
 });
 
-// ?????
-Event.hasMany(Final, {
-  through: 'eventFinalists',
-  as: 'finalists1',
-  foreignKey: 'firstPlace'
-});
-Event.hasMany(Final, {
-  through: 'eventFinalists',
-  as: 'finalists2',
-  foreignKey: 'secondPlace'
-});
-Event.hasMany(Final, {
-  through: 'eventFinalists',
-  as: 'finalists3',
-  foreignKey: 'thirdPlace'
-});
-
-Final.hasMany(Event, {
-  through: 'eventFinalists',
-  foreignKey: 'eventId'
-});
-Final.hasOne(Bot, {
-  foreignKey: 'botId'
-});
+Bot.hasOne(Final);
 
 module.exports = {
   Battle,
@@ -81,5 +64,7 @@ module.exports = {
   Final,
   Log,
   User,
+  BotsBattle,
+  EventFinalist,
   sync: sequelize.sync.bind(sequelize),
-}
+} 

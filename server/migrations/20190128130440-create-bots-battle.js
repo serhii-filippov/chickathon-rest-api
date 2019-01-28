@@ -1,35 +1,33 @@
 'use strict';
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('Battles', {
+    return queryInterface.createTable('BotsBattles', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      type: {
-        allowNull: false,
-        type: Sequelize.STRING
-      },
-      replayFile: {
-        type: Sequelize.STRING
-      },
-      dateOfBattle: {
-        allowNull: false,
-        type: Sequelize.DATE
+      // botId: {
+      //   type: Sequelize.INTEGER
+      // },
+      // battleId: {
+      //   type: Sequelize.INTEGER
+      // },
+      result: {
+        type: Sequelize.INTEGER
       },
       createdAt: {
-        allowNull: true,
+        allowNull: false,
         type: Sequelize.DATE
       },
       updatedAt: {
-        allowNull: true,
+        allowNull: false,
         type: Sequelize.DATE
       }
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('Battles');
+    return queryInterface.dropTable('BotsBattles');
   }
 };

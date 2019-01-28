@@ -7,14 +7,14 @@ const Op = Sequelize.Op;
 module.exports = {
     addUser(req, res, next) {
         const { name, department } = req.body;
-
+        
         return User
-            .upsert({
+            .create({
                 fullName: name,
                 department: department
             })
             .then(user => {
-                res.status(200).send('User ' + name + ' has been created');
+                res.status(200).send('User ' + user.id + ' has been created');
             })
             .catch(next)
     },

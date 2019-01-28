@@ -1,35 +1,30 @@
 'use strict';
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('Battles', {
+    return queryInterface.createTable('EventFinalists', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      type: {
-        allowNull: false,
-        type: Sequelize.STRING
+      finalistId: {
+        type: Sequelize.INTEGER
       },
-      replayFile: {
-        type: Sequelize.STRING
-      },
-      dateOfBattle: {
-        allowNull: false,
-        type: Sequelize.DATE
+      eventId: {
+        type: Sequelize.INTEGER
       },
       createdAt: {
-        allowNull: true,
+        allowNull: false,
         type: Sequelize.DATE
       },
       updatedAt: {
-        allowNull: true,
+        allowNull: false,
         type: Sequelize.DATE
       }
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('Battles');
+    return queryInterface.dropTable('EventFinalists');
   }
 };

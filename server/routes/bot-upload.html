@@ -3,8 +3,20 @@
         Welcome to the bot creation page!
     </h1>
 
-    <form method = "post" encType="multipart/form-data" action = '/bot'>
-        <input type = "file" name = "botSourceFile">
-        <input type = "submit" value = "upload">
+    <form method = "post" encType="multipart/form-data" action="/bot/1" id="frm" >
+        <input type = "file" name = "botSourceFile" />
+        <input type = "submit" value = "upload" />
     </form>
+    <!-- <script>
+        const frm = document.getElementById("frm");
+        frm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            fetch('/bot/1', {
+                method: "PUT",
+                body: {
+                    botSourceFile: frm.botSourceFile.value
+                }
+            })
+        })
+    </script> -->
 </html>
