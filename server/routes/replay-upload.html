@@ -3,7 +3,7 @@
         Welcome to the replay upload creation page!
     </h1>
 
-    <form method = "post" encType="multipart/form-data" action = '/battle'>
+    <form method = "put" encType="multipart/form-data" action = '/battle/:id'>
         <input type = "file" name = "replayFile">
         <input type = "submit" value = "upload">
     </form>

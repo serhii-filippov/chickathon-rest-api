@@ -1,15 +1,19 @@
 'use strict';
 
 const archivator = require('./archivator');
-
+const path = require('path');
+const User = require('../models/user');
 const Bot = require('../models/bot');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
 module.exports = {
     addBot(req, res, next) {
-// send name, userId and devLanguage through body
+// send name, userId and devLanguage into body of request
         const { name, userId, devLanguage } = req.body;
+        // const name = 'bot2 name',
+        // userId = 2,
+        // devLanguage = 'bot2 devLanguage';
 
         return Bot
             .create({
@@ -51,7 +55,6 @@ module.exports = {
         if (Object.keys(req.files).length == 0) {
             return res.status(400).send('No bot file was provided');
         }
-        console.log('вышел из if в sourceUpload2');
 // botSourceFile is the name of the input field in the bot creation form
 // need to add ' encType="multipart/form-data" ' (without '') to the form attributes
 
@@ -62,8 +65,7 @@ module.exports = {
                 let fileExtension = String('.' + botSourceFile.name.split('.').slice(-1));
                 const botFileName = String(bot.userId) + '-' + bot.name.split(' ').join('-');
                 const fileName = botFileName + fileExtension;
-                const jarFile = 'server/files/bots-sources/' + fileName;
-                console.log('jarFile = ', jarFile);
+                const jarFile = path.join('server/files/bots-sources/', fileName);
                 
                 botSourceFile.mv(jarFile, () => {
                     req.createdBotObject = { jarFile };
@@ -160,32 +162,19 @@ module.exports = {
         return Bot
         .findByPk(req.params.id)
         .then(bot => {
-            //  const { exec } = require('child_process');
             const bareOriginFileName = path.basename(bot.jarFile);
             const bareOriginDirPath = path.dirname(bot.jarFile);
             let fileName = bareOriginFileName + '.gz';
             const fileDir = path.join(bareOriginDirPath, 'archives');
-            console.log('fileDir = ', fileDir);
-            // exec(fileDir, (error, stdout, stderr) => {
-            //     if (error) {
-            //         console.error(`exec error: ${error}`);
-            //         return;
-            //     }
-            //     console.log(`stdout: ${stdout}`);
-            //     console.log(`stderr: ${stderr}`);
-            // });
-
             const filePath = path.join(fileDir, fileName);
-            console.log('filePath = ', filePath);
 
             const zlib = require('zlib');
             const gzip = zlib.createGzip();
             const temp2 = path.join(bareOriginDirPath, bareOriginFileName);
-            console.log('temp2 = ', temp2);
+
             const inp = fs.createReadStream(temp2);
             const out = fs.createWriteStream(filePath);
 
-            //  res.header('Content-type', 'application/octet-stream');
             inp.pipe(gzip).pipe(out);
   
         })
@@ -210,10 +199,10 @@ module.exports = {
             .catch(next)
     },
 
-// updated dev rating value needs to be passed by updated_dev_rating variable through request body
+// updated dev rating value needs to be passed by newRating variable through request body
 // type should be real (number with floating dot), not string
     updateDevRating(req, res, next) {
-        const updatedDevRating = req.body.updated_dev_rating;
+        const updatedDevRating = req.body.newRating;
         
         if (updatedDevRating) {
             return Bot
@@ -237,23 +226,25 @@ module.exports = {
         }
     },
 
-// updated event rating value needs to be passed by updated_event_rating variable through request body
+// updated event rating value needs to be passed by newRating variable through request body
 // type should be real (number with floating dot), not string
     updateEventRating(req, res, next) {
-        const updatedEventRating = req.body.updated_event_rating;
+        const updatedEventRating = req.body.newRating;
         
         if (updatedEventRating) {
             return Bot
                 .findByPk(req.params.id)
                 .then(bot => {
                     req.createdBotObject = {
-                        botId: bot.id
+                        botId: bot.id,
+                        newRating: updatedEventRating
                     }
                     return bot
                         .update({
                             eventRating: updatedEventRating
-                        }).then(() => {
-                            res.status(200).send('Bot event rating updated successfully');
+                        })
+                        .then(() => {
+                            next()
                         })
                         .catch(next)
                 })
@@ -276,5 +267,20 @@ module.exports = {
                     .catch(next)
             })
             .catch(next)
+    },
+
+    getCertainBot(req, res, next) {
+        return Bot
+            .findOne({
+                where: {
+                    id: req.params.id
+                },
+                include: {
+                    model: User
+                }
+            })
+            .then(bot => {
+                res.send(bot)
+            })
     }
 }

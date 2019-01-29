@@ -11,7 +11,8 @@ module.exports = (req, res, jarFilePath) => {
     const output = fs.createWriteStream(filePath);
     const input = fs.createReadStream(jarFilePath)
     const archive = archiver('zip', {
-        zlib: { level: 9 } // Sets the compression level.
+    // Sets the compression level.
+        zlib: { level: 9 } 
     });
     
     output.on('close', function() {

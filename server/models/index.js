@@ -55,7 +55,9 @@ Log.belongsTo(Event, {
   foreignKey: 'eventId'
 });
 
-Bot.hasOne(Final);
+Final.belongsTo(Bot, {
+  foreignKey: 'botId'
+});
 
 module.exports = {
   Battle,

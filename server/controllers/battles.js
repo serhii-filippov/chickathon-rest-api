@@ -1,6 +1,7 @@
 'use strict';
 
 const BotsBattle = require('../models/botsbattle');
+const Bot = require('../models/bot');
 const Battle = require('../models/battle');
 const path = require('path');
 
@@ -53,37 +54,35 @@ module.exports = {
     },
 
     replayFileUpload(req, res, next) {
-        console.log('зашли в replayFileUpload');
-        console.log('req.files = ', req.files);
         if (Object.keys(req.files).length == 0) {
             return res.status(400).send('No battle replay file was provided');
         }
 
 // replayFile is the name of the input field in the bot creation form, 
-// just copy-paste this: input type = "file" name = "replayFile"
-// need to add ' encType="multipart/form-data" ' (without '') to the form attributes
-        console.log('req.createdBattleObject = ', req.createdBattleObject);
+// copy-paste this: input type = "file" name = "replayFile"
+// and add ' encType="multipart/form-data" ' (without '') to the form attributes
         const id = (req.createdBattleObject && req.createdBattleObject.id) || req.params.id;
-        const d = new Date(dateOfBattle);
-        
+        // const d = new Date(dateOfBattle);
+
         req.createdBattleObject = {
-            battleReplayFileName: String(id) + '-' + d.toISOString().split('T')[0] + '.jar'
+            // battleReplayFileName: String(id) + '-' + d.toISOString().split('T')[0] + '.jar',
+            battleReplayFileName: String(id) + '.jar'
         };
         let replayFile = req.files.replayFile;
         const replayFilePath = path.join('server/files/replays', req.createdBattleObject.battleReplayFileName);
 
         replayFile.mv(replayFilePath, () => {
             req.createdBattleObject.replayFilePath = replayFilePath;
+            req.createdBattleObject.id = id;
             next();
         }) 
     },
 
     updateBattle(req, res, next) {
-// have to add battle replay upload function
-        const { result } = req.body;
+        const id = req.createdBattleObject.id;
+        const result = (req.body.result && req.body.result) || 10000;
         const replayFile = req.createdBattleObject.replayFilePath;
 
-        console.log('result = ' + result + ' replayFile = ' + replayFile + ' id = ' + id);
         return Battle
             .findByPk(id)
             .then(battle => {
@@ -94,13 +93,58 @@ module.exports = {
                         })
                         .then(() => {
                             return BotsBattle
+                                .findAndCountAll({
+                                    where: {
+                                        battleId: id
+                                    },
+                                    attributes: {
+                                        include: ['id']
+                                    }
+                                })
+                                .then(result2 => {
+                                    const currentBotsBattleRow1 = result2.rows[0].dataValues.id;
+                                    const currentBotsBattleRow2 = result2.rows[1].dataValues.id;
+                                    console.log('currentBotsBattleRow1 = ', currentBotsBattleRow1);
+                                    console.log('currentBotsBattleRow2 = ', currentBotsBattleRow2);
+
+                                    return BotsBattle
+                                        .findByPk(currentBotsBattleRow1)
+                                        .then(botsbattle1 => {
+                                            return botsbattle1
+                                                .update({
+                                                    result: result
+                                                })
+                                                .then(() => {
+                                                    return BotsBattle
+                                                        .findByPk(currentBotsBattleRow2)
+                                                        .then(botsbattle2 => {
+                                                            return botsbattle2
+                                                                .update({
+                                                                    result: result
+                                                                })
+                                                                .then(() => {
+                                                                    res.send(`Battle with ID ${id} updated!`)
+                                                                })
+                                                                .catch(next)
+                                                        })
+                                                        .catch(next)
+                                                })
+                                                .catch(next)
+                                        })
+                                        .catch(next)
+                                })
+                                .catch(next)
+                        })
+                        .catch(next)
+                } else if (result !== undefined) {
+                    return BotsBattle
                                 .findAll({
                                     where: {
                                         battleId: id
                                     }
                                 })
-                                .then(botsbattle => {
-                                    return botsbattle
+                                .then(botsbattles => {
+                                    return botsbattles
                                         .update({
                                             result: result
                                         })
@@ -110,15 +154,6 @@ module.exports = {
                                         .catch(next)
                                 })
                                 .catch(next)
-                        })
-                        .catch(next)
-                } else if (result !== undefined) {
-                    return battle
-                        .update({
-                            result: result
-                        })
-                        .then(() => res.send(`Battle with ID ${id} updated!`))
-                        .catch(next)
                 } else if (replayFile !== undefined) {
                     return battle
                         .update({
@@ -135,7 +170,14 @@ module.exports = {
 
     showBattleDetails(req, res, next) {
         return Battle
-            .findByPk(req.params.id)
+            .findOne({
+                where: {
+                    id: req.params.id
+                },
+                include: {
+                    model: Bot
+                }
+            })
             .then(battle => {
                 if (battle) {
                     return res.status(200).send(battle)

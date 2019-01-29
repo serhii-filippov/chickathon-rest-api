@@ -18,14 +18,17 @@ module.exports = {
       },
       firstPlace: {
         allowNull: false,
+        defaultValue: 0,
         type: Sequelize.INTEGER
       },
       secondPlace: {
         allowNull: false,
+        defaultValue: 0,
         type: Sequelize.INTEGER
       },
       thirdPlace: {
         allowNull: false,
+        defaultValue: 0,
         type: Sequelize.INTEGER
       },
       isEnded: {
@@ -34,11 +37,9 @@ module.exports = {
         type: Sequelize.BOOLEAN
       },
       createdAt: {
-        allowNull: true,
         type: Sequelize.DATE
       },
       updatedAt: {
-        allowNull: true,
         type: Sequelize.DATE
       }
     });

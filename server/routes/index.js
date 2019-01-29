@@ -16,30 +16,30 @@ module.exports = (app) => {
     });
 
     app.post('/user', userController.addUser);
-    app.get('/user/:id', userController.showProfile);
+    app.get('/user/:id', userController.validateToken, userController.showProfile);
     app.get('/users', userController.showAllIds);
     app.get('/users/ids/updated-after', userController.showAllUsersUpdatedAfter);
 
     app.post('/log', logController.addLog);
     app.get('/logs', logController.showAllLogs);
 
+    app.post('/battle', battleController.createBattle);
     app.get('/battles', battleController.showAllBattles);
     app.get('/battle/:id', battleController.showBattleDetails);
-    app.put('/battle/update/:id', battleController.updateBattle);
 
     app.get('/events', eventController.showAllEvents);
+    app.get('/event/:id', eventController.isEnded, eventController.showCertainEvent)
     app.put('/event/:id', eventController.updateEvent);
 
+    app.get('/final/:id', finalController.showCertainEntry);
     app.post('/final/:id', finalController.updateEntry);
 
-// добавить триггер, который будет срабатывать при создании записи в таблице Bots
-// а также при всех изменениях в ней; по срабатыванию триггера должен срабатывать мидлвэр на обновление
-// соответствующей записи в Finals
     app.get('/bots', botController.showAllBots);
+    app.get('/bot/:id', botController.getCertainBot);
     app.get('/bots/:id', botController.getBotsViaUserId);
     app.get('/bots/updated/after', botController.showAllBotsUpdatedAfter);
     app.put('/bot/update/devrating/:id', botController.updateDevRating);
-    app.put('/bot/update/eventrating/:id', botController.updateEventRating);
+    app.put('/bot/update/eventrating/:id', botController.updateEventRating, finalController.updateEntry);
     app.get('/bot/source/:id', botController.getBotZippedSourceFile);
     app.delete('/bot/:id', botController.deleteBot);
     
@@ -47,16 +47,14 @@ module.exports = (app) => {
     app.get('/bot', (req, res) => {
         res.sendFile(__dirname + '/bot-upload.html');
     });
-    app.post('/bot', botController.addBot, botController.sourceUpload, botController.updateSourceFilePath);
-    app.put('/bot/:id', botController.sourceUpload2, botController.updateSourceFilePath);
+    app.post('/bot', userController.validateToken, botController.addBot, botController.sourceUpload, botController.updateSourceFilePath, finalController.createEntry);
+    app.put('/bot/:id', userController.validateToken, botController.sourceUpload2, botController.updateSourceFilePath);
 
     app.get('/battle', (req, res) => {
         res.sendFile(__dirname + '/replay-upload.html');
     });
-    app.post('/battle', battleController.createBattle);
-    // app.post('/battle', battleController.createBattle, battleController.replayFileUpload, battleController.updateBattle);
-    app.put('/battle/:id', battleController.replayFileUpload);
     app.put('/battle/:id', battleController.replayFileUpload, battleController.updateBattle);
+    app.put('/battle/update/:id', battleController.updateBattle);
 
     app.use(serverError.handle404Error);
     app.use(serverError.errorLogger);

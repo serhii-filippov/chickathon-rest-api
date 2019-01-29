@@ -3,20 +3,61 @@
 const User = require('../models/user');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
+const jwt = require('jsonwebtoken');
+const hashConfig = require('../auth/config');
+const secret = hashConfig.JWT_SECRET;
+const options = {
+    expiresIn: '7d', 
+    issuer: 'Great and Powerfull',
+};
 
 module.exports = {
+// this middleware sends token in response
     addUser(req, res, next) {
-        const { name, department } = req.body;
+        const { name, department, login, password } = req.body;
         
         return User
             .create({
                 fullName: name,
-                department: department
+                department: department,
+                login: login,
+                password: password
             })
             .then(user => {
-                res.status(200).send('User ' + user.id + ' has been created');
+                const payload = { 
+                    id: user.id,
+                };
+                let token = jwt.sign(payload, secret, options);
+                res.status(200).send(token);
             })
             .catch(next)
+    },
+
+    validateToken(req, res, next) {
+        let result;
+        const token = req.headers.token || req.body.token;
+
+        if (token) {
+            try {
+                result = jwt.verify(token, secret, options);
+                res.isAdmin = result.isAdmin;
+                console.log(result);
+                next();
+            }
+            catch(err) {
+                result = {
+                    error: `Your token has been expired. Go to login page to authentication`,
+                    code: 401
+                };
+                res.status(result.code).send(result);
+            }
+        } else {
+            result = {
+                error: `Authentication error. Token required.`,
+                code: 401
+            };
+            res.status(result.code).send(result);
+        }
     },
 
     showProfile(req, res, next) {
