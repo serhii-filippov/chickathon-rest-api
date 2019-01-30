@@ -2,21 +2,21 @@
   "development": {
     "username": "postgres",
     "password": "eVerY3Pa%s$wordIsG00d",
-    "database": "chi-ckathon",
+    "database": "chickathon",
     "host": "127.0.0.1",
     "dialect": "postgres"
   },
   "test": {
     "username": "postgres",
     "password": "eVerY3Pa%s$wordIsG00d",
-    "database": "chi-ckathon",
+    "database": "chickathon",
     "host": "127.0.0.1",
     "dialect": "postgres"
   },
   "production": {
     "username": "postgres",
     "password": "eVerY3Pa%s$wordIsG00d",
-    "database": "chi-ckathon",
+    "database": "chickathon",
     "host": "127.0.0.1",
     "dialect": "postgres"
   }
