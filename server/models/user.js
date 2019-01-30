@@ -10,7 +10,7 @@ const User = sequelize.define('User', {
   password: DataTypes.STRING
 }, {});
 
-User.hook('beforeSave', (user, options) => {
+User.addHook('beforeSave', (user, options) => {
   return bcrypt.hash(user.password, hashConfig.saltRounds)
     .then((hash) => {
       user.password = hash;
