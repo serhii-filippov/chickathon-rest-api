@@ -21,7 +21,7 @@ module.exports = {
         
         return User
 // check for uniqe login in DB for each new user
-            .findAll({
+            .findOne({
                 where: {
                     login: login
                 }
