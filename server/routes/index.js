@@ -16,11 +16,16 @@ module.exports = (app) => {
     });
 
     app.post('/user', userController.addUser);
-    app.get('/user/:id', userController.validateToken, userController.showProfile);
-    app.get('/users', userController.showAllIds);
+    app.get('/user', userController.validateToken, userController.showProfile);
+    app.get('/userers', userController.showAllIds);
     app.get('/users/ids/updated-after', userController.showAllUsersUpdatedAfter);
+    app.put('/user/update', userController.validateToken, userController.updateProfile);
+    app.post('/user/login', userController.logIn);
+// 'admin' route for getting any user info through his ID
+    app.get('/user/info/:id', userController.showProfile);
 
     app.post('/log', logController.addLog);
+    app.get('/log/:id', logController.showCertainLog);
     app.get('/logs', logController.showAllLogs);
 
     app.post('/battle', battleController.createBattle);
@@ -35,21 +40,26 @@ module.exports = (app) => {
     app.post('/final/:id', finalController.updateEntry);
 
     app.get('/bots', botController.showAllBots);
-    app.get('/bot/:id', botController.getCertainBot);
+// 'admin' route for getting every single bot details
+    app.get('/boterrers/:id', botController.getCertainBot);
+// regular route for getting user's own bot details
+    app.get('/bot', userController.validateToken, botController.getMyBotInfo);
     app.get('/bots/:id', botController.getBotsViaUserId);
     app.get('/bots/updated/after', botController.showAllBotsUpdatedAfter);
     app.put('/bot/update/devrating/:id', botController.updateDevRating);
     app.put('/bot/update/eventrating/:id', botController.updateEventRating, finalController.updateEntry);
-    app.get('/bot/source/:id', botController.getBotZippedSourceFile);
-    app.delete('/bot/:id', botController.deleteBot);
+    app.get('/bot/source', userController.validateToken, botController.getBotZippedSourceFile);
+    app.delete('/boterrerrs/:id', botController.deleteBot);
     
     app.use(fileUpload());
+// replace next 3 rows with front-end page with "bot upload" functionality
     app.get('/bot', (req, res) => {
         res.sendFile(__dirname + '/bot-upload.html');
     });
     app.post('/bot', userController.validateToken, botController.addBot, botController.sourceUpload, botController.updateSourceFilePath, finalController.createEntry);
-    app.put('/bot/:id', userController.validateToken, botController.sourceUpload2, botController.updateSourceFilePath);
+    app.put('/bot', userController.validateToken, botController.sourceUpload2, botController.updateSourceFilePath);
 
+// replace next 3 rows with client page with "replay upload" functionality
     app.get('/battle', (req, res) => {
         res.sendFile(__dirname + '/replay-upload.html');
     });

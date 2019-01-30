@@ -9,29 +9,35 @@ const Op = Sequelize.Op;
 
 module.exports = {
     addBot(req, res, next) {
-// send name, userId and devLanguage into body of request
-        const { name, userId, devLanguage } = req.body;
+// send name and devLanguage into body of request
+// userId will be taken from auth token
+        const { name, devLanguage } = req.body;
+        const userId = decoded.id;
         // const name = 'bot2 name',
         // userId = 2,
         // devLanguage = 'bot2 devLanguage';
 
-        return Bot
-            .create({
-                name: name,
-                userId: Number(userId),
-                devLanguage: devLanguage
-            })
-            .then(createdBot => {
-                req.createdBotObject = {
-                    botId: createdBot.id,
-                    botFileName: String(userId) + '-' + name.split(' ').join('-'),
+        if (userId) {
+            return Bot
+                .create({
                     name: name,
-                    userId: userId,
+                    userId: Number(userId),
                     devLanguage: devLanguage
-                };
-                next()
-            })
-            .catch(next)
+                })
+                .then(createdBot => {
+                    req.createdBotObject = {
+                        botId: createdBot.id,
+                        botFileName: String(userId) + '-' + name.split(' ').join('-'),
+                        name: name,
+                        userId: userId,
+                        devLanguage: devLanguage
+                    };
+                    next()
+                })
+                .catch(next)
+        } else {
+            res.status(400).send('No permition to create bots. You are not signed in.')
+        }
     },
         
     sourceUpload(req, res, next) {
@@ -52,6 +58,7 @@ module.exports = {
     },
 
     sourceUpload2(req, res, next) {
+        const userId = decoded.id;
         if (Object.keys(req.files).length == 0) {
             return res.status(400).send('No bot file was provided');
         }
@@ -59,7 +66,7 @@ module.exports = {
 // need to add ' encType="multipart/form-data" ' (without '') to the form attributes
 
         return Bot
-            .findByPk(req.params.id)
+            .findByPk(userId)
             .then(bot => {
                 let botSourceFile = req.files.botSourceFile;
                 let fileExtension = String('.' + botSourceFile.name.split('.').slice(-1));
@@ -77,7 +84,8 @@ module.exports = {
 
     updateSourceFilePath(req, res, next) {
 // in case if bot was just created
-        if (!req.params.id) {
+        const userId = decoded.id;
+        if (!userId) {
             return Bot
                 .findOne({
                     where: {
@@ -93,7 +101,7 @@ module.exports = {
                             jarFileUpdateDate: new Date()
                         })
                         .then(() => {
-                            res.status(200).send('Bot was created succsessfully. Source file uploaded. All is ok');
+                            res.status(200).send(bot);
                             next()
                         })
                         .catch(next)
@@ -102,15 +110,15 @@ module.exports = {
 // in case we want to update existing bot source file
         } else {
             return Bot
-                .findByPk(req.params.id)
+                .findByPk(userId)
                 .then(bot => {
                     return bot
                         .update({
                             jarFile: req.createdBotObject.jarFile,
                             jarFileUpdateDate: new Date()
                         })
-                        .then(() => {
-                            res.send('Bot source file updated successfully');
+                        .then(result => {
+                            res.status(200).send(result);
                         })
                 })
         }
@@ -182,12 +190,18 @@ module.exports = {
     },
 
     getBotZippedSourceFile(req, res, next) {
+        const userId = decoded.id;
+
         return Bot
-        .findByPk(req.params.id)
-        .then(bot => {
-            archivator(req, res, bot.jarFile)
-        })
-        .catch(next)
+            .findOne({
+                where: {
+                    userId: userId
+                }
+            })
+            .then(bot => {
+                archivator(req, res, bot.jarFile)
+            })
+            .catch(next)
     },
 
     showAllBots(req, res, next) {
@@ -263,8 +277,26 @@ module.exports = {
                 }
                 return bot
                     .destroy()
-                    .then(() => res.status(201).send('Bot deleted'))
+                    .then(() => res.status(204).send('Bot deleted'))
                     .catch(next)
+            })
+            .catch(next)
+    },
+
+    getMyBotInfo(req, res, next) {
+        const userId = decoded.id;
+
+        return Bot
+            .findOne({
+                where: {
+                    userId: userId
+                }
+            })
+            .then(bot => {
+                if (bot) {
+                    return res.status(200).send(bot)
+                }
+                return res.status(400).send('No bot was found. Try to add some or go to log in page')
             })
             .catch(next)
     },
@@ -280,7 +312,7 @@ module.exports = {
                 }
             })
             .then(bot => {
-                res.send(bot)
+                res.status(200).send(bot)
             })
     }
 }

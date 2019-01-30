@@ -16,7 +16,7 @@ module.exports = {
                 position: 0,
                 score: 0
             })
-            .then(() => res.status(200).send(`Successfully created entry in Finals for bot with ID = ${botId}`))
+            .then(() => {})
             .catch(next)
     },
 

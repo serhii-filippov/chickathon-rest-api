@@ -3,6 +3,9 @@
 const User = require('../models/user');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
+
+const bcrypt = require('bcrypt');
+
 const jwt = require('jsonwebtoken');
 const hashConfig = require('../auth/config');
 const secret = hashConfig.JWT_SECRET;
@@ -17,18 +20,68 @@ module.exports = {
         const { name, department, login, password } = req.body;
         
         return User
-            .create({
-                fullName: name,
-                department: department,
-                login: login,
-                password: password
+// check for uniqe login in DB for each new user
+            .findAll({
+                where: {
+                    login: login
+                }
             })
             .then(user => {
-                const payload = { 
-                    id: user.id,
-                };
-                let token = jwt.sign(payload, secret, options);
-                res.status(200).send(token);
+                if (!user) {
+                    return User
+                        .create({
+                            fullName: name,
+                            department: department,
+                            login: login,
+                            password: password
+                        })
+                        .then(user => {
+                            const payload = { 
+                                id: user.id,
+                            };
+                            let token = jwt.sign(payload, secret, options);
+                            res.status(201).send(token);
+                        })
+                        .catch(next)
+                } else {
+                    res.status(400).send('User with provided login is already exists. Try another login')
+                }
+            })
+    },
+
+    logIn(req, res, next) {
+        const { login, password } = req.body;
+        return User
+            .findOne({
+                where: {
+                    login: login
+                }
+            })
+            .then(user => {
+                if (user) {
+                    return bcrypt.compare(password, user.password)
+                            .then(match => {
+                                if (match) {
+                                    const payload = { 
+                                        id: user.id,
+                                    };
+                                    let token = jwt.sign(payload, secret, options);
+                                    res.status(201).send(token);
+                                    
+                                } else {
+                                    res.status(400).send('Wrong login or password. Try again.')
+                                }
+                            })
+                            .catch(err => {
+                                status = 500;
+                                result.code = status;
+                                result.message += String(err);
+
+                                return false
+                        })
+                } else {
+                    res.status(400).send('Wrong login or password. Try again.')
+                }
             })
             .catch(next)
     },
@@ -40,11 +93,11 @@ module.exports = {
         if (token) {
             try {
                 result = jwt.verify(token, secret, options);
-                res.isAdmin = result.isAdmin;
-                console.log(result);
+                req.decoded = result;
                 next();
             }
             catch(err) {
+// enter here redirect for the log in page 
                 result = {
                     error: `Your token has been expired. Go to login page to authentication`,
                     code: 401
@@ -52,6 +105,7 @@ module.exports = {
                 res.status(result.code).send(result);
             }
         } else {
+// enter here redirect for the log in page 
             result = {
                 error: `Authentication error. Token required.`,
                 code: 401
@@ -125,8 +179,30 @@ module.exports = {
             .catch(next)
     },
 
-    updateProfile(req, res) {
+    updateProfile(req, res, next) {
+        let decoded = jwt.verify(token, secret, options);
+        let id = decoded.id;
 
+        return User
+            .findByPk(id)
+            .then(user => {
+                if (user) {
+                    const { name, department, login, password } = req.body;
+                    
+                    return user
+                        .update({
+                            fullName: name || user.fullName,
+                            department: department || user.department,
+                            login: login || user.login,
+                            password: password || user.password
+                        })
+                        .then(updatedUser => res.status(200).send(updatedUser))
+                        .catch(next)
+                } else {
+                    res.status(404).send('No user with provided token was found. Try to re-sign in')
+                }
+            })
+            .catch(next)
     },
 
     deleteUser(req, res) {

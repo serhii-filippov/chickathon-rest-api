@@ -15,6 +15,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING
       },
+      status: {
+        type: Sequelize.BOOLEAN
+      },
       eventId: {
         defaultValue: 0,
         allowNull: false,

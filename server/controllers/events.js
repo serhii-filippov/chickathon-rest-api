@@ -17,10 +17,11 @@ module.exports = {
     showCertainEvent(req, res, next) {
         if (req.eventObject.isEnded) {
             return Event
-            .findByPk(req.params.id)
-            .then(event => {
-                res.status(200).send(event)
-            })
+                .findByPk(req.params.id)
+                .then(event => {
+                    res.status(200).send(event)
+                })
+                .catch(next)
         } else res.status(400).send('Event still flows');
     },
 

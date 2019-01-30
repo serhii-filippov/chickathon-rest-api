@@ -39,7 +39,7 @@ module.exports = {
                                     result: 0
                                 })
                                 .then(() => {
-                                    res.status(200).send(`${battle.id}`)
+                                    res.status(201).send(battle);
                                     next()
                                 })
                                 .catch(next)
@@ -123,7 +123,7 @@ module.exports = {
                                                                     result: result
                                                                 })
                                                                 .then(() => {
-                                                                    res.send(`Battle with ID ${id} updated!`)
+                                                                    res.send(battle)
                                                                 })
                                                                 .catch(next)
                                                         })
@@ -149,7 +149,7 @@ module.exports = {
                                             result: result
                                         })
                                         .then(() => {
-                                            res.send(`Battle with ID ${id} updated!`)
+                                            res.status(200).send(battle)
                                         })
                                         .catch(next)
                                 })
@@ -159,7 +159,7 @@ module.exports = {
                         .update({
                             replayFile: replayFile
                         })
-                        .then(() => res.send(`Battle with ID ${id} updated!`))
+                        .then(() => res.status(200).send(battle))
                         .catch(next)
                 } else {
                     res.status(400).send(`No data was provided (result of battle and/or replay file URI)`)
