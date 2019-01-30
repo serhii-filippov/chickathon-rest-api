@@ -40,11 +40,11 @@ module.exports = {
                                 id: user.id,
                             };
                             let token = jwt.sign(payload, secret, options);
-                            res.status(201).send(token);
+                            res.status(201).json({"token": token});
                         })
                         .catch(next)
                 } else {
-                    res.status(400).send('User with provided login is already exists. Try another login')
+                    res.status(400).json('User with provided login is already exists. Try another login')
                 }
             })
     },
@@ -66,10 +66,10 @@ module.exports = {
                                         id: user.id,
                                     };
                                     let token = jwt.sign(payload, secret, options);
-                                    res.status(201).send(token);
+                                    res.status(201).json({"token": token});
                                     
                                 } else {
-                                    res.status(400).send('Wrong login or password. Try again.')
+                                    res.status(400).json('Wrong login or password. Try again.')
                                 }
                             })
                             .catch(err => {
@@ -80,7 +80,7 @@ module.exports = {
                                 return false
                         })
                 } else {
-                    res.status(400).send('Wrong login or password. Try again.')
+                    res.status(400).json('Wrong login or password. Try again.')
                 }
             })
             .catch(next)
@@ -97,20 +97,20 @@ module.exports = {
                 next();
             }
             catch(err) {
-// enter here redirect for the log in page 
+// in front-end enter here redirect for the log in page 
                 result = {
                     error: `Your token has been expired. Go to login page to authentication`,
                     code: 401
                 };
-                res.status(result.code).send(result);
+                res.status(result.code).json(result);
             }
         } else {
-// enter here redirect for the log in page 
+// in front-end enter here redirect for the log in page 
             result = {
                 error: `Authentication error. Token required.`,
                 code: 401
             };
-            res.status(result.code).send(result);
+            res.status(result.code).json(result);
         }
     },
 
@@ -123,9 +123,9 @@ module.exports = {
                 .findByPk(req.params.id)
                 .then(user => {
                     if (!user) {
-                        return res.status(404).send('User with provided id is not found');
+                        return res.status(404).json('User with provided id is not found');
                     } else {
-                        return res.status(200).send(user);
+                        return res.status(200).json(user);
                     }
                 })
                 .catch(next)
@@ -137,11 +137,11 @@ module.exports = {
                     }
                 })
                 .then(user => {
-                    res.status(200).send(user);
+                    res.status(200).json(user);
                 })
                 .catch(next)
         } else {
-            res.status(400).send('No username or his id was provided');
+            res.status(400).json('No username or his id was provided');
         }
     },
 
@@ -156,7 +156,7 @@ module.exports = {
                     idsArray.push(users[key].id)
                 }
                 console.log(idsArray);
-                res.status(200).send(idsArray);
+                res.status(200).json(idsArray);
             })
             .catch(next)
     },
@@ -174,7 +174,7 @@ module.exports = {
                 }
             })
             .then(users => {
-                res.status(200).send(users);
+                res.status(200).json(users);
             })
             .catch(next)
     },
@@ -196,10 +196,10 @@ module.exports = {
                             login: login || user.login,
                             password: password || user.password
                         })
-                        .then(updatedUser => res.status(200).send(updatedUser))
+                        .then(updatedUser => res.status(200).json(updatedUser))
                         .catch(next)
                 } else {
-                    res.status(404).send('No user with provided token was found. Try to re-sign in')
+                    res.status(404).json('No user with provided token was found. Try to re-sign in')
                 }
             })
             .catch(next)

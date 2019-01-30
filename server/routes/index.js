@@ -1,5 +1,7 @@
 'use strict';
 
+const cors = require('cors');
+
 const fileUpload = require('express-fileupload');
 const serverError = require('../errors/errors').ServerError;
 const winstonLogger = require('../errors/logger').WinLogger;
@@ -11,6 +13,9 @@ const eventController = require('../controllers').events;
 const finalController = require('../controllers').finals;
 
 module.exports = (app) => {
+// using cors module for providing a Connect/Express middleware
+    app.use(cors());
+
     app.get('/', (req, res) => {
         res.status(200).send('Welcome to the CHIckathon REST API');
     });

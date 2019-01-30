@@ -39,7 +39,7 @@ module.exports = {
                                     result: 0
                                 })
                                 .then(() => {
-                                    res.status(201).send(battle);
+                                    res.status(201).json(battle);
                                     next()
                                 })
                                 .catch(next)
@@ -47,7 +47,7 @@ module.exports = {
                         .catch(next)
                 } else {
                     console.log('Some error occured during bot creating in "else" into createBattle func');
-                    res.status(400).send(`Some error occured during bot creating`);
+                    res.status(400).json(`Some error occured during bot creating`);
                 }
             })
             .catch(next)
@@ -55,7 +55,7 @@ module.exports = {
 
     replayFileUpload(req, res, next) {
         if (Object.keys(req.files).length == 0) {
-            return res.status(400).send('No battle replay file was provided');
+            return res.status(400).json('No battle replay file was provided');
         }
 
 // replayFile is the name of the input field in the bot creation form, 
@@ -123,7 +123,7 @@ module.exports = {
                                                                     result: result
                                                                 })
                                                                 .then(() => {
-                                                                    res.send(battle)
+                                                                    res.status(200).json(battle)
                                                                 })
                                                                 .catch(next)
                                                         })
@@ -149,7 +149,7 @@ module.exports = {
                                             result: result
                                         })
                                         .then(() => {
-                                            res.status(200).send(battle)
+                                            res.status(200).json(battle)
                                         })
                                         .catch(next)
                                 })
@@ -159,10 +159,10 @@ module.exports = {
                         .update({
                             replayFile: replayFile
                         })
-                        .then(() => res.status(200).send(battle))
+                        .then(() => res.status(200).json(battle))
                         .catch(next)
                 } else {
-                    res.status(400).send(`No data was provided (result of battle and/or replay file URI)`)
+                    res.status(400).json(`No data was provided (result of battle and/or replay file URI)`)
                 }
             })
             .catch(next)
@@ -180,9 +180,9 @@ module.exports = {
             })
             .then(battle => {
                 if (battle) {
-                    return res.status(200).send(battle)
+                    return res.status(200).json(battle)
                 }
-                return res.status(404).send(`Battle with ID ${req.params.id} was not found`);
+                return res.status(404).json(`Battle with ID ${req.params.id} was not found`);
             })
             .catch(next)
     },
@@ -192,9 +192,9 @@ module.exports = {
             .findAll()
             .then(battles => {
                 if (battles) {
-                    return res.status(200).send(battles)
+                    return res.status(200).json(battles)
                 }
-                return res.status(404).send(`No battles were found. Try create some before display it =)`);
+                return res.status(404).json(`No battles were found. Try create some before display it =)`);
             })
             .catch(next)
     }

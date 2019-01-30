@@ -57,7 +57,7 @@ module.exports = {
                                         })
                                         .catch(next)
                                 }
-                                res.status(200).send('Successfully updated all!');
+                                res.status(200).json('Successfully updated all!');
                             })
                             .catch(next)
                     })

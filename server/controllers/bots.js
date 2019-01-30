@@ -36,13 +36,13 @@ module.exports = {
                 })
                 .catch(next)
         } else {
-            res.status(400).send('No permition to create bots. You are not signed in.')
+            res.status(400).json('No permition to create bots. You are not signed in.')
         }
     },
         
     sourceUpload(req, res, next) {
         if (Object.keys(req.files).length == 0) {
-            return res.status(400).send('No bot file was provided');
+            return res.status(400).json('No bot file was provided');
         }
 // botSourceFile is the name of the input field in the bot creation form
 // need to add ' encType="multipart/form-data" ' (without '') to the form attributes
@@ -60,7 +60,7 @@ module.exports = {
     sourceUpload2(req, res, next) {
         const userId = decoded.id;
         if (Object.keys(req.files).length == 0) {
-            return res.status(400).send('No bot file was provided');
+            return res.status(400).json('No bot file was provided');
         }
 // botSourceFile is the name of the input field in the bot creation form
 // need to add ' encType="multipart/form-data" ' (without '') to the form attributes
@@ -101,7 +101,7 @@ module.exports = {
                             jarFileUpdateDate: new Date()
                         })
                         .then(() => {
-                            res.status(200).send(bot);
+                            res.status(200).json(bot);
                             next()
                         })
                         .catch(next)
@@ -118,7 +118,7 @@ module.exports = {
                             jarFileUpdateDate: new Date()
                         })
                         .then(result => {
-                            res.status(200).send(result);
+                            res.status(200).json(result);
                         })
                 })
         }
@@ -133,9 +133,9 @@ module.exports = {
             })
             .then(bots => {
                 if (bots) {
-                    return res.status(200).send(bots)
+                    return res.status(200).json(bots)
                 } else {
-                    return res.status(404).send('No bots with provided user\'s ID was found')
+                    return res.status(404).json('No bots with provided user\'s ID was found')
                 }
             })
             .catch(next)
@@ -155,9 +155,9 @@ module.exports = {
             })
             .then(bots => {
                 if (bots) {
-                    return res.status(200).send(bots)
+                    return res.status(200).json(bots)
                 } else {
-                    return res.status(404).send('No bots created or updated after given date was found')
+                    return res.status(404).json('No bots created or updated after given date was found')
                 }
             })
             .catch(next)
@@ -208,7 +208,7 @@ module.exports = {
         return Bot
             .findAll()
             .then(bots => {
-                res.status(200).send(bots)
+                res.status(200).json(bots)
             })
             .catch(next)
     },
@@ -230,13 +230,13 @@ module.exports = {
                             devRating: updatedDevRating
                         })
                         .then(() => {
-                            res.status(200).send('Bot dev rating updated successfully');
+                            res.status(200).json('Bot dev rating updated successfully');
                         })
                         .catch(next)
                 })
                 .catch(next)
         } else {
-            res.status(400).send('Dev rating value was not provided');
+            res.status(400).json('Dev rating value was not provided');
         }
     },
 
@@ -264,7 +264,7 @@ module.exports = {
                 })
                 .catch(next)
         } else {
-            res.status(400).send('Event rating value was not provided');
+            res.status(400).json('Event rating value was not provided');
         }
     },
 
@@ -273,11 +273,11 @@ module.exports = {
             .findByPk(req.params.id)
             .then(bot => {
                 if (!bot) {
-                    return res.status(404).send('No bot with provided id was founded')
+                    return res.status(404).json('No bot with provided id was founded')
                 }
                 return bot
                     .destroy()
-                    .then(() => res.status(204).send('Bot deleted'))
+                    .then(() => res.status(204).json('Bot deleted'))
                     .catch(next)
             })
             .catch(next)
@@ -294,9 +294,9 @@ module.exports = {
             })
             .then(bot => {
                 if (bot) {
-                    return res.status(200).send(bot)
+                    return res.status(200).json(bot)
                 }
-                return res.status(400).send('No bot was found. Try to add some or go to log in page')
+                return res.status(400).json('No bot was found. Try to add some or go to log in page')
             })
             .catch(next)
     },
@@ -312,7 +312,7 @@ module.exports = {
                 }
             })
             .then(bot => {
-                res.status(200).send(bot)
+                res.status(200).json(bot)
             })
     }
 }

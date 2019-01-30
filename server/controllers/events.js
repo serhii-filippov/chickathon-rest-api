@@ -9,7 +9,7 @@ module.exports = {
         return Event
             .findAll()
             .then(events => {
-                res.status(200).send(events)
+                res.status(200).json(events)
             })
             .catch(next)
     },
@@ -19,10 +19,10 @@ module.exports = {
             return Event
                 .findByPk(req.params.id)
                 .then(event => {
-                    res.status(200).send(event)
+                    res.status(200).json(event)
                 })
                 .catch(next)
-        } else res.status(400).send('Event still flows');
+        } else res.status(400).json('Event still flows');
     },
 
 // when isEnded field turns into true
@@ -67,7 +67,7 @@ module.exports = {
                                 isEnded: eventOjbect.isEnded
                             })
                             .then(result => {
-                                res.status(200).send('Event updated successfully. And has been closed. Result = ' + result);
+                                res.status(200).json('Event updated successfully. And has been closed. Result = ' + result);
                             })
                             .catch(next)
                     })
@@ -80,7 +80,7 @@ module.exports = {
                         isEnded: eventOjbect.isEnded
                     })
                     .then(result =>{
-                        res.send('Event updated successfully. And it still flows');
+                        res.status(200).json(result);
                     })
                     .catch(next)
             }

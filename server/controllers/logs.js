@@ -19,7 +19,7 @@ module.exports = {
                 battleId: battleId || 0
             })
             .then(log => {
-                res.status(201).send(log)
+                res.status(201).json(log)
             })
             .catch(next)
     },
@@ -28,7 +28,7 @@ module.exports = {
         return Log
             .findByPk(req.params.id)
             .then(log => {
-                res.status(200).send(log)
+                res.status(200).json(log)
             })
             .catch(next)
     },
@@ -37,7 +37,7 @@ module.exports = {
         return Log
             .findAll()
             .then(logs => {
-                res.status(200).send(logs)
+                res.status(200).json(logs)
             })
             .catch(next)
     }
