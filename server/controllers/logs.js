@@ -7,13 +7,15 @@ module.exports = {
 // all data have to be send through request body
 // put 1 into eventId, botId or battleId in case if log type is eventId, botId or battleId respectively
         const { type, content, status, eventId, botId, battleId } = req.body;
-
+        if (status === undefined) {
+            status = true
+        }
         return Log
             .create({
                 type: type || null,
                 content: content || null,
 // status of all logs is TRUE by default
-                status: status || true,
+                status:  status,
                 eventId: eventId || 0,
                 botId: botId || 0,
                 battleId: battleId || 0

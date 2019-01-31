@@ -4,6 +4,7 @@ const archivator = require('./archivator');
 const path = require('path');
 const User = require('../models/user');
 const Bot = require('../models/bot');
+const Log = require('../models/log');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
@@ -13,7 +14,7 @@ module.exports = {
 // userId will be taken from auth token
         const { name, devLanguage } = req.body;
         const userId = req.decoded.id;
-        // const name = 'bot2 name',
+        // const name = 'bot2 name', 
         // userId = 2,
         // devLanguage = 'bot2 devLanguage';
 
@@ -294,9 +295,38 @@ module.exports = {
             })
             .then(bot => {
                 if (bot) {
-                    return res.status(200).json(bot)
+                    return Log
+                        .findOne({
+                            where: {
+                                botId: bot.id,
+                            },
+                            through: {
+                                attributes: ['status']
+                            }
+                        })
+                        .then(log => {
+                            let result;
+                            if (log) {
+                                result = {
+                                    ...bot.get({
+                                        plain: true
+                                    }),
+                                    status: log.status
+                                }
+                            } else {
+                                result = {
+                                    ...bot.get({
+                                        plain: true
+                                    }),
+                                    status: log
+                                }
+                            }
+                            return res.status(200).json(result)
+                        })
+                        .catch(next)
+                } else {
+                    return res.status(404).json('No bot belonged to your profile was found')
                 }
-                return res.status(400).json('No bot was found. Try to add some or go to log in page')
             })
             .catch(next)
     },

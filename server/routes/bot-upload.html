@@ -4,6 +4,15 @@
     </h1>
 
     <form method = "post" encType="multipart/form-data" action="/bot" id="frm" >
+            <input type = "text" value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNTQ4OTMyNjcwLCJleHAiOjE1NDk1Mzc0NzAsImlzcyI6IkdyZWF0IGFuZCBQb3dlcmZ1bGwifQ.S2oF-kH4Pe9a5eGEOcXPxi8pGSQiYVZTLjsvIqroS4Q" name = "token" hidden />
+        <p>
+            <label for = "name">Bot name: </label>
+            <input type = "text" name = "name" />
+        </p>
+        <p>
+            <label for = "devLanguage">Bot development language: </label>
+            <input type = "text" name = "devLanguage" />
+        </p>
         <input type = "file" name = "botSourceFile" />
         <input type = "submit" value = "upload" />
     </form>

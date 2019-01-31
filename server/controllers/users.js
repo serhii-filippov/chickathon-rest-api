@@ -93,8 +93,12 @@ module.exports = {
         if (token) {
             try {
                 result = jwt.verify(token, secret, options);
-                req.decoded = result;
-                next();
+                if (result) {
+                    req.decoded = result;
+                    next()
+                } else {
+                    res.status(400).json('Provided token is not valid')
+                }
             }
             catch(err) {
 // in front-end enter here redirect for the log in page 
@@ -115,33 +119,25 @@ module.exports = {
     },
 
     showProfile(req, res, next) {
-        let id = Number(req.params.id) || null;
-        const name = req.params.name || null;
+        const token = req.headers.token || req.body.token;
+        let decoded = jwt.verify(token, secret, options);
+        let id = decoded.id;
 
         if (id) {
             return User
-                .findByPk(req.params.id)
+                .findByPk(id)
                 .then(user => {
-                    if (!user) {
-                        return res.status(404).json('User with provided id is not found');
+                    if (user.id) {
+                        let { login, fullName, department, updatedAt } = user
+                        let bareUser = { login, fullName, department, updatedAt };
+                        return res.status(200).json(bareUser);
                     } else {
-                        return res.status(200).json(user);
+                        return res.status(404).json('User with provided id is not found');
                     }
-                })
-                .catch(next)
-        } else if (name) {
-            return User
-                .findAll({
-                    where: {
-                        fullName: name
-                    }
-                })
-                .then(user => {
-                    res.status(200).json(user);
                 })
                 .catch(next)
         } else {
-            res.status(400).json('No username or his id was provided');
+            res.status(400).json('Your token is expired, not valid or was not provided');
         }
     },
 
@@ -155,7 +151,6 @@ module.exports = {
                 for (let key in users) {
                     idsArray.push(users[key].id)
                 }
-                console.log(idsArray);
                 res.status(200).json(idsArray);
             })
             .catch(next)
@@ -180,29 +175,34 @@ module.exports = {
     },
 
     updateProfile(req, res, next) {
+        const token = req.headers.token || req.body.token;
         let decoded = jwt.verify(token, secret, options);
         let id = decoded.id;
 
-        return User
-            .findByPk(id)
-            .then(user => {
-                if (user) {
-                    const { name, department, login, password } = req.body;
-                    
-                    return user
-                        .update({
-                            fullName: name || user.fullName,
-                            department: department || user.department,
-                            login: login || user.login,
-                            password: password || user.password
-                        })
-                        .then(updatedUser => res.status(200).json(updatedUser))
-                        .catch(next)
-                } else {
-                    res.status(404).json('No user with provided token was found. Try to re-sign in')
-                }
-            })
-            .catch(next)
+        if (id) {
+            return User
+                .findByPk(id)
+                .then(user => {
+                    if (user) {
+                        const { name, department, login, password } = req.body;
+                        
+                        return user
+                            .update({
+                                fullName: name || user.fullName,
+                                department: department || user.department,
+                                login: login || user.login,
+                                password: password || user.password
+                            })
+                            .then(updatedUser => res.status(200).json(updatedUser))
+                            .catch(next)
+                    } else {
+                        res.status(404).json('No user with provided token was found. Try to re-sign in')
+                    }
+                })
+                .catch(next)
+        } else {
+            res.status(400).json('Your token is expired, not valid or was not provided')
+        }
     },
 
     deleteUser(req, res) {

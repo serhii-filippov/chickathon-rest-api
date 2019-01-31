@@ -58,7 +58,7 @@ module.exports = (app) => {
     
     app.use(fileUpload());
 // replace next 3 rows with front-end page with "bot upload" functionality
-    app.get('/bot', (req, res) => {
+    app.get('/bot/upload', (req, res) => {
         res.sendFile(__dirname + '/bot-upload.html');
     });
     app.post('/bot', userController.validateToken, botController.addBot, botController.sourceUpload, botController.updateSourceFilePath, finalController.createEntry);
