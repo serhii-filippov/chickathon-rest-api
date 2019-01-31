@@ -54,7 +54,7 @@ module.exports = (app) => {
     app.put('/bot/update/devrating/:id', botController.updateDevRating);
     app.put('/bot/update/eventrating/:id', botController.updateEventRating, finalController.updateEntry);
     app.get('/bot/source', userController.validateToken, botController.getBotZippedSourceFile);
-    app.delete('/boterrerrs/:id', botController.deleteBot);
+//  app.delete('/boterrerrs/:id', botController.deleteBot);
     
     app.use(fileUpload());
 // replace next 3 rows with front-end page with "bot upload" functionality
