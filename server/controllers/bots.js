@@ -12,7 +12,7 @@ module.exports = {
 // send name and devLanguage into body of request
 // userId will be taken from auth token
         const { name, devLanguage } = req.body;
-        const userId = decoded.id;
+        const userId = req.decoded.id;
         // const name = 'bot2 name',
         // userId = 2,
         // devLanguage = 'bot2 devLanguage';
@@ -58,7 +58,7 @@ module.exports = {
     },
 
     sourceUpload2(req, res, next) {
-        const userId = decoded.id;
+        const userId = req.decoded.id;
         if (Object.keys(req.files).length == 0) {
             return res.status(400).json('No bot file was provided');
         }
@@ -84,7 +84,7 @@ module.exports = {
 
     updateSourceFilePath(req, res, next) {
 // in case if bot was just created
-        const userId = decoded.id;
+        const userId = req.decoded.id;
         if (!userId) {
             return Bot
                 .findOne({
@@ -190,7 +190,7 @@ module.exports = {
     },
 
     getBotZippedSourceFile(req, res, next) {
-        const userId = decoded.id;
+        const userId = req.decoded.id;
 
         return Bot
             .findOne({
@@ -284,7 +284,7 @@ module.exports = {
     },
 
     getMyBotInfo(req, res, next) {
-        const userId = decoded.id;
+        const userId = req.decoded.id;
 
         return Bot
             .findOne({

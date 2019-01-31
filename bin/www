@@ -7,8 +7,8 @@ app.set('port', port);
 
 const server = http.createServer(app);
 server.listen(port, () => {
-  dbSync({force: true}).then((message) => {
-    console.log('db synced')
-  })
+//  dbSync({force: true}).then((message) => {
+//    console.log('db synced')
+//  })
   console.log(`CHIckathon server is running at localhost:${port}`);
 });

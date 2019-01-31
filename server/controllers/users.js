@@ -27,7 +27,7 @@ module.exports = {
                 }
             })
             .then(user => {
-                if (!user.id) {
+                if (!user) {
                     return User
                         .create({
                             fullName: name,
