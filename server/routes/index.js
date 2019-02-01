@@ -37,6 +37,7 @@ module.exports = (app) => {
     app.get('/battles', battleController.showAllBattles);
     app.get('/battle/:id', battleController.showBattleDetails);
 
+//  app.post('/event', eventController.createEvent);
     app.get('/events', eventController.showAllEvents);
     app.get('/event/:id', eventController.isEnded, eventController.showCertainEvent)
     app.put('/event/:id', eventController.updateEvent);

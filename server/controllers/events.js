@@ -5,6 +5,18 @@ const Final = require('../models/final');
 const eventId = require('../config/event.json').eventId;
 
 module.exports = {
+    createEvent(req, res, next) {
+        const { startDate, endDate } = req.body;
+        
+        return Event
+            .create({
+                startDate: startDate,
+                endDate: endDate
+            })
+            .then(result => res.status(200).json(result))
+            .catch(next)
+    },
+
     showAllEvents(req, res, next) {
         return Event
             .findAll()
@@ -28,64 +40,68 @@ module.exports = {
 // when isEnded field turns into true
 // the top 3 bots will be entered in corresponding rows
     updateEvent(req, res, next) {
-        const id = req.params.id || eventId;
-        const isEventEnded = req.body.isEnded || false;
+        const id = (req.params && req.params.id) || eventId;
+        const isEventEnded = (req.body && req.body.isEnded) || false;
         
-        return Event
-        .findByPk(id)
-        .then(event => {
-            let { startDate, endDate, firstPlace, secondPlace, thirdPlace, isEnded } = req.body || {
-                startDate: event.startDate,
-                endDate: event.endDate,
-                firstPlace: event.firstPlace,
-                secondPlace: event.secondPlace,
-                thirdPlace: event.thirdPlace,
-                isEnded: event.isEnded
-            };
-            let eventOjbect = { event, startDate, endDate, firstPlace, secondPlace, thirdPlace, isEnded };
-            console.log('сейчас isEventEnded = ', isEventEnded);
+        if (!id) return res.status(400).json('No Event ID was provided');
 
-            return eventOjbect
+        return Event
+            .findByPk(id)
+            .then(event => {
+                let { startDate, endDate, firstPlace, secondPlace, thirdPlace, isEnded } = req.body || {
+                    startDate: event.startDate,
+                    endDate: event.endDate,
+                    firstPlace: event.firstPlace,
+                    secondPlace: event.secondPlace,
+                    thirdPlace: event.thirdPlace,
+                    isEnded: isEventEnded
+                };
+                let eventObject = { event, startDate, endDate, firstPlace, secondPlace, thirdPlace, isEnded };
+                if (eventObject.isEnded === undefined) {
+                    eventObject.isEnded = false;
+                }
+                console.log('eventObject.isEnded = ', eventObject.isEnded)
+                return eventObject
+                })
+            .then(eventObject => {
+                if (isEventEnded) {
+                    return Final
+                        .findAll({
+                            order: [
+                                ['position']
+                            ],
+                            limit: 3
+                        })
+                        .then(finalists => {
+                            return eventObject.event
+                                .update({
+                                    startDate: eventObject.startDate,
+                                    endDate: eventObject.endDate,
+                                    firstPlace: finalists[0].id,
+                                    secondPlace: finalists[1].id,
+                                    thirdPlace: finalists[2].id,
+                                    isEnded: eventObject.isEnded
+                                })
+                                .then(result => {
+                                    res.status(200).json('Event updated successfully. And has been closed. Result = ' + result);
+                                })
+                                .catch(next)
+                        })
+                        .catch(next)
+                } else {
+                    return eventObject.event
+                        .update({
+                            startDate: eventObject.startDate,
+                            endDate: eventObject.endDate,
+                            isEnded: eventObject.isEnded
+                        })
+                        .then(result =>{
+                            res.status(200).json(result);
+                        })
+                        .catch(next)
+                }
             })
-        .then(eventOjbect => {
-            if (isEventEnded) {
-                return Final
-                    .findAll({
-                        order: [
-                            ['position']
-                        ],
-                        limit: 3
-                    })
-                    .then(finalists => {
-                        return eventOjbect.event
-                            .update({
-                                startDate: eventOjbect.startDate,
-                                endDate: eventOjbect.endDate,
-                                firstPlace: finalists[0].id,
-                                secondPlace: finalists[1].id,
-                                thirdPlace: finalists[2].id,
-                                isEnded: eventOjbect.isEnded
-                            })
-                            .then(result => {
-                                res.status(200).json('Event updated successfully. And has been closed. Result = ' + result);
-                            })
-                            .catch(next)
-                    })
-                    .catch(next)
-            } else {
-                return eventOjbect.event
-                    .update({
-                        startDate: eventOjbect.startDate,
-                        endDate: eventOjbect.endDate,
-                        isEnded: eventOjbect.isEnded
-                    })
-                    .then(result =>{
-                        res.status(200).json(result);
-                    })
-                    .catch(next)
-            }
-        })
-        .catch(next)
+            .catch(next)
     },
 
     updateEventAfterEnd(req, res, next) {
