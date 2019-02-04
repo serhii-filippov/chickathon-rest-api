@@ -97,6 +97,7 @@ module.exports = {
             try {
                 result = jwt.verify(token, secret, options);
                 if (result) {
+                    console.log('result.id = ', result.id);
                     return User
                         .findByPk(result.id)
                         .then(user => {

@@ -407,9 +407,9 @@ module.exports = {
                 where: {
                     userId: userId
                 },
-                through: {
-                    attributes: ['']
-                }
+                // through: {
+                //     attributes: ['']
+                // }
             })
             .then(bot => {
                 return Battle
