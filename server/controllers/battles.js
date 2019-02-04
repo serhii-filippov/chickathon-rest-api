@@ -21,8 +21,8 @@ module.exports = {
                 if (battle) {
                     req.createdBattleObject = {
                         id: battle.id,
-                        bot1Id: battle.bot1Id,
-                        bot2Id: battle.bot2Id
+                        bot1Id: Number(battle.bot1Id),
+                        bot2Id: Number(battle.bot2Id)
                     }
 
                     return BotsBattle
@@ -40,7 +40,7 @@ module.exports = {
                                 })
                                 .then(() => {
                                     res.status(201).json(battle);
-                                    next()
+                                    // next()
                                 })
                                 .catch(next)
                         })
@@ -61,25 +61,30 @@ module.exports = {
 // replayFile is the name of the input field in the bot creation form, 
 // copy-paste this: input type = "file" name = "replayFile"
 // and add ' encType="multipart/form-data" ' (without '') to the form attributes
-        const id = (req.createdBattleObject && req.createdBattleObject.id) || req.params.id;
-        // const d = new Date(dateOfBattle);
+        const id = req.params.id;
 
-        req.createdBattleObject = {
-            // battleReplayFileName: String(id) + '-' + d.toISOString().split('T')[0] + '.jar',
-            battleReplayFileName: String(id) + '.jar'
-        };
-        let replayFile = req.files.replayFile;
-        const replayFilePath = path.join('server/files/replays', req.createdBattleObject.battleReplayFileName);
+        return Battle
+            .findByPk(id)
+            .then(battle => {
+                const d = new Date(battle.dateOfBattle);
+                req.createdBattleObject = {
+                    // battleReplayFileName: String(id) + '-' + d.toISOString().split('T')[0] + '.jar',
+                    battleReplayFileName: String(id) + '-' + String(d.toISOString().split('T')[0]) + '.jar'
+                };
+                let replayFile = req.files.replayFile;
+                const replayFilePath = path.join('server/files/replays', req.createdBattleObject.battleReplayFileName);
 
-        replayFile.mv(replayFilePath, () => {
-            req.createdBattleObject.replayFilePath = replayFilePath;
-            req.createdBattleObject.id = id;
-            next();
-        }) 
+                replayFile.mv(replayFilePath, () => {
+                    req.createdBattleObject.replayFilePath = replayFilePath;
+                    req.createdBattleObject.id = id;
+                    next();
+                })
+            })
+            .catch(next)
     },
 
     updateBattle(req, res, next) {
-        const id = req.createdBattleObject.id;
+        const id = (req.createdBattleObject && req.createdBattleObject.id) || req.params.id;
         const result = (req.body.result && req.body.result) || 10000;
         const replayFile = req.createdBattleObject.replayFilePath;
 

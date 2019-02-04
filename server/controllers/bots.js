@@ -2,9 +2,14 @@
 
 const archivator = require('./archivator');
 const path = require('path');
+const fs = require('fs');
+
 const User = require('../models/user');
 const Bot = require('../models/bot');
 const Log = require('../models/log');
+const Battle = require('../models/battle');
+const BotsBattle = require('../models/botsbattle');
+
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
@@ -14,26 +19,51 @@ module.exports = {
 // userId will be taken from auth token
         const { name, devLanguage } = req.body;
         const userId = req.decoded.id;
-        // const name = 'bot2 name', 
-        // userId = 2,
-        // devLanguage = 'bot2 devLanguage';
 
         if (userId) {
             return Bot
-                .create({
-                    name: name,
-                    userId: Number(userId),
-                    devLanguage: devLanguage
+                .findAll({
+                    where: {
+                        userId: userId
+                    }
                 })
-                .then(createdBot => {
-                    req.createdBotObject = {
-                        botId: createdBot.id,
-                        botFileName: String(userId) + '-' + name.split(' ').join('-'),
-                        name: name,
-                        userId: userId,
-                        devLanguage: devLanguage
-                    };
-                    next()
+                .then(bots => {
+                    if (bots.length === 0) {
+                        return Bot
+                            .findAll({
+                                where: {
+                                    name: {
+                                        [Op.iLike]: name
+                                    }
+                                }
+                            })
+                            .then(findedByNamesBots => {
+                                if (findedByNamesBots.length === 0) {
+                                    return Bot
+                                        .create({
+                                            name: name,
+                                            userId: Number(userId),
+                                            devLanguage: devLanguage
+                                        })
+                                        .then(createdBot => {
+                                            req.createdBotObject = {
+                                                botId: createdBot.id,
+                                                botFileName: String(userId) + '-' + name.split(' ').join('-'),
+                                                name: name,
+                                                userId: userId,
+                                                devLanguage: devLanguage
+                                            };
+                                            next()
+                                        })
+                                        .catch(next)
+                                } else {
+                                    return res.status(400).json('Bot with provided name is already exists')
+                                }
+                            })
+                            .catch(next)
+                    } else {
+                        return res.status(400).json('You can\'t create more than 1 bot')
+                    }
                 })
                 .catch(next)
         } else {
@@ -67,7 +97,11 @@ module.exports = {
 // need to add ' encType="multipart/form-data" ' (without '') to the form attributes
 
         return Bot
-            .findByPk(userId)
+            .findOne({
+                where: {
+                    userId: userId
+                }
+            })
             .then(bot => {
                 let botSourceFile = req.files.botSourceFile;
                 let fileExtension = String('.' + botSourceFile.name.split('.').slice(-1));
@@ -111,7 +145,11 @@ module.exports = {
 // in case we want to update existing bot source file
         } else {
             return Bot
-                .findByPk(userId)
+                .findOne({
+                    where: {
+                        userId: userId                        
+                    }
+                })
                 .then(bot => {
                     return bot
                         .update({
@@ -344,5 +382,91 @@ module.exports = {
             .then(bot => {
                 res.status(200).json(bot)
             })
+    },
+
+    getCertainBotSourceFile(req, res, next) {
+        let fs = require('fs');
+        let readStream;
+        // let fileName = path.join(req.headers.fileName, 'server/files/bots-sources/');
+        const id = req.params.id;
+
+        return Bot
+            .findByPk(id)
+            .then(bot => {
+                readStream = fs.createReadStream(bot.jarFile);
+                readStream.pipe(res)
+            })
+            .catch(next)
+    },
+
+    getBotStatistic(req, res, next) {
+        const userId = req.decoded.id;
+        
+        return Bot
+            .findOne({
+                where: {
+                    userId: userId
+                },
+                through: {
+                    attributes: ['']
+                }
+            })
+            .then(bot => {
+                return Battle
+                    .findAll({
+                        through: {
+                            attributes: ['id', 'replayFile', 'dateOfBattle'],
+                            model: BotsBattle,
+                            where: {
+                                botId: bot.id
+                            }
+                        },
+                        include: {
+                            model: Bot,
+                            // attributes: ['id', 'name', 'BotsBattle']
+                        },
+                    })
+                    .then(botsBattles => {
+                        let botsStatisticArr = [];
+                        let botsStatisticObj = {};
+                        let myBotName, opponentBotName;
+// isWinner flag is false by default (in case if battle is not finished yet)
+                        let isWinner = false;
+
+                        for (let i = 0; i < botsBattles.length; i++) {                            
+                            for (let y = 0; y < botsBattles[i].Bots.length; y++) {
+                                if (botsBattles[i].Bots[y].id === bot.id) {
+                                    myBotName = botsBattles[i].Bots[y].name;
+                                    isWinner = Number(botsBattles[i].Bots[0].BotsBattle.result) === Number(bot.id);
+                                } else {
+                                    opponentBotName = botsBattles[i].Bots[y].name;
+                                }
+                            }
+
+                            botsStatisticObj = {
+                                dateOfBattle: botsBattles[i].dateOfBattle,
+                                replayFile: (botsBattles[i].replayFile)
+                                    ? 'http://192.168.2.147:8000/battle/replay/' + botsBattles[i].replayFile.split('/')[3]
+                                    : null,
+                                myBotName: myBotName,
+                                opponentBotName: opponentBotName,
+                                isWinner: isWinner
+                            }
+                            botsStatisticArr.push(botsStatisticObj)
+                        }
+                        botsStatisticArr.sort((a, b) => new Date(b.dateOfBattle).getTime() - new Date(a.dateOfBattle).getTime())
+                        return res.status(200).json(botsStatisticArr)
+                    })
+                    .catch(next)
+            })
+            .catch(next)
+    },
+
+    getReplayByLink(req, res, next) {
+        const name = String(req.params.name);
+        const filePath = path.join(__dirname, '../files/replays/', name);
+        const readStream = fs.createReadStream(filePath);
+        
+        readStream.pipe(res)
     }
 }

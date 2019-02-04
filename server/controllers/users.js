@@ -1,9 +1,12 @@
 'use strict';
 
 const User = require('../models/user');
+
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
+const fs = require('fs');
+const path = require('path');
 const bcrypt = require('bcrypt');
 
 const jwt = require('jsonwebtoken');
@@ -94,10 +97,18 @@ module.exports = {
             try {
                 result = jwt.verify(token, secret, options);
                 if (result) {
-                    req.decoded = result;
-                    next()
+                    return User
+                        .findByPk(result.id)
+                        .then(user => {
+                            if (user) {
+                                req.decoded = result;
+                                next()
+                            } else {
+                                return res.status(403).json('User doesn"t exist')
+                            }
+                        })
                 } else {
-                    res.status(400).json('Provided token is not valid')
+                    return res.status(400).json('Provided token is not valid')
                 }
             }
             catch(err) {
@@ -128,7 +139,7 @@ module.exports = {
                 .findByPk(id)
                 .then(user => {
                     if (user.id) {
-                        let { login, fullName, department, updatedAt } = user
+                        let { login, fullName, department, updatedAt } = user;
                         let bareUser = { login, fullName, department, updatedAt };
                         return res.status(200).json(bareUser);
                     } else {
@@ -139,6 +150,19 @@ module.exports = {
         } else {
             res.status(400).json('Your token is expired, not valid or was not provided');
         }
+    },
+
+    showMyOwnProfile(req, res, next) {
+        const id = req.params.id
+
+        return User
+            .findByPk(id)
+            .then(user => {
+                let { login, fullName, department, updatedAt } = user;
+                let bareUser = { login, fullName, department, updatedAt };
+                return res.status(200).json(bareUser);
+            })
+            .catch(next)
     },
 
 // returns array of users' IDs
@@ -203,6 +227,22 @@ module.exports = {
         } else {
             res.status(400).json('Your token is expired, not valid or was not provided')
         }
+    },
+
+    getDevKit(req, res, next) {
+        const language = (req.headers && req.headers.language) || 'pYthoN';
+        const fileName = language.toLowerCase() + '.zip';
+        const filePath = path.join(__dirname, '../files/devkits/', fileName);
+        const readStream = fs.createReadStream(filePath);
+
+        readStream.pipe(res)
+    },
+
+    getGameFile(req, res, next) {
+        const filePath = path.join(__dirname, '../files/game.zip');
+        const readStream = fs.createReadStream(filePath);
+
+        readStream.pipe(res)
     },
 
     deleteUser(req, res) {

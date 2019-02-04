@@ -20,6 +20,9 @@ module.exports = (app) => {
         res.status(200).send('Welcome to the CHIckathon REST API');
     });
 
+    app.get('/devkit', userController.getDevKit);
+    app.get('/game', userController.getGameFile);
+
     app.post('/user', userController.addUser);
     app.get('/user', userController.validateToken, userController.showProfile);
     app.get('/userers', userController.showAllIds);
@@ -27,7 +30,7 @@ module.exports = (app) => {
     app.put('/user/update', userController.validateToken, userController.updateProfile);
     app.post('/user/login', userController.logIn);
 // 'admin' route for getting any user info through his ID
-    app.get('/user/info/:id', userController.showProfile);
+    app.get('/user/info/:id', userController.showMyOwnProfile);
 
     app.post('/log', logController.addLog);
     app.get('/log/:id', logController.showCertainLog);
@@ -36,7 +39,8 @@ module.exports = (app) => {
     app.post('/battle', battleController.createBattle);
     app.get('/battles', battleController.showAllBattles);
     app.get('/battle/:id', battleController.showBattleDetails);
-
+    app.get('/battle/replay/:name', botController.getReplayByLink);
+    
 //  app.post('/event', eventController.createEvent);
     app.get('/events', eventController.showAllEvents);
     app.get('/event/:id', eventController.isEnded, eventController.showCertainEvent)
@@ -48,6 +52,8 @@ module.exports = (app) => {
     app.get('/bots', botController.showAllBots);
 // 'admin' route for getting every single bot details
     app.get('/boterrers/:id', botController.getCertainBot);
+    app.get('/bot/source/files-or-notwhokno-ws/:id', botController.getCertainBotSourceFile);
+    app.get('/bot/statistic', userController.validateToken, botController.getBotStatistic);
 // regular route for getting user's own bot details
     app.get('/bot', userController.validateToken, botController.getMyBotInfo);
     app.get('/bots/:id', botController.getBotsViaUserId);
@@ -69,7 +75,7 @@ module.exports = (app) => {
     app.get('/battle', (req, res) => {
         res.sendFile(__dirname + '/replay-upload.html');
     });
-    app.put('/battle/:id', battleController.replayFileUpload, battleController.updateBattle);
+    app.post('/battle/:id', battleController.replayFileUpload, battleController.updateBattle);
     app.put('/battle/update/:id', battleController.updateBattle);
 
     app.use(serverError.handle404Error);
