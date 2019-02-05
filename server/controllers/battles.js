@@ -10,47 +10,50 @@ module.exports = {
     createBattle(req, res, next) {
 // date needs to be passed by dateOfBattle variable through request body in format YYYY-MM-DD GMT
         const { type, bot1Id, bot2Id, dateOfBattle } = req.body;
+        if (bot1Id && bot2Id && dateOfBattle && type) {
+            return Battle
+                .create({
+                    type: type,
+                    replayFile: null,
+                    dateOfBattle: dateOfBattle
+                })
+                .then(battle => {
+                    if (battle) {
+                        req.createdBattleObject = {
+                            id: battle.id,
+                            bot1Id: Number(bot1Id),
+                            bot2Id: Number(bot2Id)
+                        }
 
-        return Battle
-            .create({
-                type: type,
-                replayFile: null,
-                dateOfBattle: dateOfBattle
-            })
-            .then(battle => {
-                if (battle) {
-                    req.createdBattleObject = {
-                        id: battle.id,
-                        bot1Id: Number(battle.bot1Id),
-                        bot2Id: Number(battle.bot2Id)
+                        return BotsBattle
+                            .create({
+                                botId: bot1Id,
+                                battleId: battle.id,
+                                result: 0
+                            })
+                            .then(() => {
+                                return BotsBattle
+                                    .create({
+                                        botId: bot2Id,
+                                        battleId: battle.id,
+                                        result: 0
+                                    })
+                                    .then(() => {
+                                        res.status(201).json(battle);
+                                        // next()
+                                    })
+                                    .catch(next)
+                            })
+                            .catch(next)
+                    } else {
+                        console.log('Some error occured during bot creating in "else" into createBattle func');
+                        res.status(400).json(`Some error occured during bot creating`);
                     }
-
-                    return BotsBattle
-                        .create({
-                            botId: bot1Id,
-                            battleId: battle.id,
-                            result: 0
-                        })
-                        .then(() => {
-                            return BotsBattle
-                                .create({
-                                    botId: bot2Id,
-                                    battleId: battle.id,
-                                    result: 0
-                                })
-                                .then(() => {
-                                    res.status(201).json(battle);
-                                    // next()
-                                })
-                                .catch(next)
-                        })
-                        .catch(next)
-                } else {
-                    console.log('Some error occured during bot creating in "else" into createBattle func');
-                    res.status(400).json(`Some error occured during bot creating`);
-                }
-            })
-            .catch(next)
+                })
+                .catch(next)
+        } else {
+            return res.status(400).json('Those fields: type, bot1Id, bot2Id, dateOfBattle shouldn"t be empty')
+        }
     },
 
     replayFileUpload(req, res, next) {
@@ -86,7 +89,7 @@ module.exports = {
     updateBattle(req, res, next) {
         const id = (req.createdBattleObject && req.createdBattleObject.id) || req.params.id;
         const result = (req.body.result && req.body.result) || 10000;
-        const replayFile = req.createdBattleObject.replayFilePath;
+        const replayFile = (req.createdBattleObject && req.createdBattleObject.replayFilePath) || undefined;
 
         return Battle
             .findByPk(id)
@@ -143,22 +146,34 @@ module.exports = {
                         .catch(next)
                 } else if (result !== undefined) {
                     return BotsBattle
-                                .findAll({
-                                    where: {
-                                        battleId: id
-                                    }
-                                })
-                                .then(botsbattles => {
-                                    return botsbattles
-                                        .update({
-                                            result: result
-                                        })
-                                        .then(() => {
-                                            res.status(200).json(battle)
-                                        })
-                                        .catch(next)
-                                })
-                                .catch(next)
+                        .update(
+                            {
+                                result: result, 
+                            },
+                            {
+                                where: {
+                                    battleId: id
+                                }
+                            }
+                        )
+                        .then(results => res.status(200).json(results))
+                        .catch(next)
+                        // .findAll({
+                        //     where: {
+                        //         battleId: id
+                        //     }
+                        // })
+                        // .then(botsbattles => {
+                        //     return botsbattles
+                        //         .update({
+                        //             result: result
+                        //         })
+                        //         .then(() => {
+                        //             res.status(200).json(battle)
+                        //         })
+                        //         .catch(next)
+                        // })
+                        // .catch(next)
                 } else if (replayFile !== undefined) {
                     return battle
                         .update({
@@ -175,19 +190,22 @@ module.exports = {
 
     showBattleDetails(req, res, next) {
         return Battle
-            .findOne({
+            .findAll({
                 where: {
                     id: req.params.id
                 },
                 include: {
-                    model: Bot
+                    model: Bot,
+                    through: {
+                        model: BotsBattle
+                    }
                 }
             })
             .then(battle => {
                 if (battle) {
                     return res.status(200).json(battle)
                 }
-                return res.status(404).json(`Battle with ID ${req.params.id} was not found`);
+                return res.status(404).json(null);
             })
             .catch(next)
     },
@@ -202,5 +220,17 @@ module.exports = {
                 return res.status(404).json(`No battles were found. Try create some before display it =)`);
             })
             .catch(next)
+    },
+
+    showCurtainBattle(req, res, next) {
+        const id = req.params.id;
+
+        return BotsBattle
+            .findAll({
+                where: {
+                    battleId: id
+                }
+            })
+            .then(battles => res.status(200).json(battles))
     }
 }

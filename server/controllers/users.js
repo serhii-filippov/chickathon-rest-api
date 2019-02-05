@@ -1,6 +1,7 @@
 'use strict';
 
 const User = require('../models/user');
+const Bot = require('../models/bot');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
@@ -97,7 +98,7 @@ module.exports = {
             try {
                 result = jwt.verify(token, secret, options);
                 if (result) {
-                    console.log('result.id = ', result.id);
+
                     return User
                         .findByPk(result.id)
                         .then(user => {
@@ -108,6 +109,7 @@ module.exports = {
                                 return res.status(403).json('User doesn"t exist')
                             }
                         })
+                        .catch(next)
                 } else {
                     return res.status(400).json('Provided token is not valid')
                 }
@@ -156,12 +158,22 @@ module.exports = {
     showMyOwnProfile(req, res, next) {
         const id = req.params.id
 
-        return User
-            .findByPk(id)
+        // return User
+            // .findByPk(id)
+            return Bot
+            .findAll({
+                where: {
+                    userId: id
+                },
+                include: {
+                    model: User
+                }
+            })
             .then(user => {
                 let { login, fullName, department, updatedAt } = user;
                 let bareUser = { login, fullName, department, updatedAt };
-                return res.status(200).json(bareUser);
+                // return res.status(200).json(bareUser);
+                return res.status(200).json(user)
             })
             .catch(next)
     },
@@ -248,5 +260,13 @@ module.exports = {
 
     deleteUser(req, res) {
 
+    },
+
+    generateTokenForFun(req, res, next) {
+        const payload = { 
+            id: 4,
+        };
+        let token = jwt.sign(payload, secret, options);
+        res.status(201).json({"token": token});
     }
 }

@@ -375,8 +375,15 @@ module.exports = {
                 where: {
                     id: req.params.id
                 },
+                // include: {
+                //     model: User,
+                //     attributes: ['login', 'department', 'updatedAt']
+                // },
                 include: {
-                    model: User
+                    model: Battle,
+                    through: {
+                        model: BotsBattle,
+                    }
                 }
             })
             .then(bot => {
@@ -406,58 +413,103 @@ module.exports = {
             .findOne({
                 where: {
                     userId: userId
-                },
-                // through: {
-                //     attributes: ['']
-                // }
+                }
             })
             .then(bot => {
-                return Battle
-                    .findAll({
-                        through: {
-                            attributes: ['id', 'replayFile', 'dateOfBattle'],
-                            model: BotsBattle,
+                if (bot) {
+                    let myBotId = bot.id;
+                    let myBotName = bot.name;
+
+                    return BotsBattle
+                        .findAll({
                             where: {
-                                botId: bot.id
+                                botId: myBotId
                             }
-                        },
-                        include: {
-                            model: Bot,
-                            // attributes: ['id', 'name', 'BotsBattle']
-                        },
-                    })
-                    .then(botsBattles => {
-                        let botsStatisticArr = [];
-                        let botsStatisticObj = {};
-                        let myBotName, opponentBotName;
+                        })
+                        .then(botsBattles => {
+                            const promises = [];
+
+                            for (let i = 0; i < botsBattles.length; i++) {
 // isWinner flag is false by default (in case if battle is not finished yet)
-                        let isWinner = false;
+                                let isWinner = false;
+                                let opponentBotName;
 
-                        for (let i = 0; i < botsBattles.length; i++) {                            
-                            for (let y = 0; y < botsBattles[i].Bots.length; y++) {
-                                if (botsBattles[i].Bots[y].id === bot.id) {
-                                    myBotName = botsBattles[i].Bots[y].name;
-                                    isWinner = Number(botsBattles[i].Bots[0].BotsBattle.result) === Number(bot.id);
+                                if (myBotId === botsBattles[i].result) {
+                                    isWinner = true
+                                } else if (botsBattles[i].result > 0) {
+                                    isWinner = false
                                 } else {
-                                    opponentBotName = botsBattles[i].Bots[y].name;
+                                    isWinner = null;
                                 }
-                            }
 
-                            botsStatisticObj = {
-                                dateOfBattle: botsBattles[i].dateOfBattle,
-                                replayFile: (botsBattles[i].replayFile)
-                                    ? 'http://192.168.2.147:8000/battle/replay/' + botsBattles[i].replayFile.split('/')[3]
-                                    : null,
-                                myBotName: myBotName,
-                                opponentBotName: opponentBotName,
-                                isWinner: isWinner
+                                const b = Battle
+                                .findByPk(botsBattles[i].battleId)
+                                    .then(findedBattles => {
+
+                                        return BotsBattle
+                                            .findAll({
+                                                where: {
+                                                    battleId: findedBattles.id,
+                                                    botId: {
+                                                        [Op.ne]: myBotId
+                                                    }
+                                                }
+                                            })
+                                            .then(opponentBot => {
+                                                if (opponentBot.length > 0) {
+                                                    let opponentBotId = opponentBot[0].botId;
+
+                                                    return Bot
+                                                        .findByPk(opponentBotId)
+                                                        .then(findedOpponentBot => {
+                                                            opponentBotName = findedOpponentBot.name;
+                                                            
+                                                            let botsStatisticObj = {
+                                                                dateOfBattle: findedBattles.dateOfBattle,
+                                                                replayFile: (findedBattles.replayFile)
+                                                                    ? 'http://192.168.2.147:8000/battle/replay/' + findedBattles.replayFile.split('/')[3]
+                                                                    : null,
+                                                                myBotName: myBotName,
+                                                                opponentBotName: opponentBotName,
+                                                                isWinner: isWinner
+                                                            }
+
+                                                            return botsStatisticObj
+                                                        })
+                                                        // .catch(next)
+                                                } else {
+                                                    opponentBotName = null;
+                                                    let botsStatisticObj = {
+                                                        dateOfBattle: findedBattles.dateOfBattle,
+                                                        replayFile: (findedBattles.replayFile)
+                                                            ? 'http://192.168.2.147:8000/battle/replay/' + findedBattles.replayFile.split('/')[3]
+                                                            : null,
+                                                        myBotName: myBotName,
+                                                        opponentBotName: opponentBotName,
+                                                        isWinner: isWinner
+                                                    }
+
+                                                    return botsStatisticObj
+                                                }
+                                            })
+                                            // .catch(next)
+                                        
+                                    })
+                                    // .catch(next);
+
+                                    promises.push(b);
                             }
-                            botsStatisticArr.push(botsStatisticObj)
-                        }
-                        botsStatisticArr.sort((a, b) => new Date(b.dateOfBattle).getTime() - new Date(a.dateOfBattle).getTime())
-                        return res.status(200).json(botsStatisticArr)
-                    })
-                    .catch(next)
+                            return Promise.all(promises)
+                                .then(result => {
+                                    const sortedArr = result.sort((a, b) => new Date(b.dateOfBattle).getTime() - new Date(a.dateOfBattle).getTime());
+                                    res.status(200).json(sortedArr);
+                                })
+                                .catch(next)
+                        })
+                        .catch(next)
+                } else {
+                    return res.status(400).json(null)
+                }
             })
             .catch(next)
     },

@@ -20,8 +20,13 @@ module.exports = (app) => {
         res.status(200).send('Welcome to the CHIckathon REST API');
     });
 
+// delete this rout
+    app.get('/make-me-some-tokenz', userController.generateTokenForFun);
+    app.get('/getsomebattles/:id', battleController.showCurtainBattle);
+    
     app.get('/devkit', userController.getDevKit);
     app.get('/game', userController.getGameFile);
+    
 
     app.post('/user', userController.addUser);
     app.get('/user', userController.validateToken, userController.showProfile);
