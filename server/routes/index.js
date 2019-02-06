@@ -38,6 +38,8 @@ module.exports = (app) => {
     app.get('/user/info/:id', userController.showMyOwnProfile);
 
     app.post('/log', logController.addLog);
+    app.get('/log/by-bot/:id', logController.findLogIdByBotId)
+    app.put('/log/:id', logController.updateCertainLog);
     app.get('/log/:id', logController.showCertainLog);
     app.get('/logs', logController.showAllLogs);
 

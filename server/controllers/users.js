@@ -158,22 +158,12 @@ module.exports = {
     showMyOwnProfile(req, res, next) {
         const id = req.params.id
 
-        // return User
-            // .findByPk(id)
-            return Bot
-            .findAll({
-                where: {
-                    userId: id
-                },
-                include: {
-                    model: User
-                }
-            })
+        return User
+            .findByPk(id)
             .then(user => {
                 let { login, fullName, department, updatedAt } = user;
-                let bareUser = { login, fullName, department, updatedAt };
-                // return res.status(200).json(bareUser);
-                return res.status(200).json(user)
+                let bareUser = { id, login, fullName, department, updatedAt };
+                return res.status(200).json(bareUser);
             })
             .catch(next)
     },

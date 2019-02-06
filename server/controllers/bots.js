@@ -339,7 +339,7 @@ module.exports = {
                                 botId: bot.id,
                             },
                             through: {
-                                attributes: ['status']
+                                attributes: ['status', 'content']
                             }
                         })
                         .then(log => {
@@ -349,7 +349,8 @@ module.exports = {
                                     ...bot.get({
                                         plain: true
                                     }),
-                                    status: log.status
+                                    status: log.status,
+                                    content: log.content
                                 }
                             } else {
                                 result = {

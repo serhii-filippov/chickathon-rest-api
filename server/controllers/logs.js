@@ -16,12 +16,64 @@ module.exports = {
                 content: content || null,
 // status of all logs is TRUE by default
                 status:  status,
-                eventId: eventId || 0,
-                botId: botId || 0,
-                battleId: battleId || 0
+                eventId: Number(eventId) || null,
+                botId: Number(botId) || null,
+                battleId: Number(battleId) || null
             })
             .then(log => {
                 res.status(201).json(log)
+            })
+            .catch(next)
+    },
+
+    updateCertainLog(req, res, next) {
+        const id = req.params.id;
+        const { type, content, status, eventId, botId, battleId } = req.body;
+
+        if (status === undefined) {
+            status = true
+        }
+
+        return Log
+            .findByPk(id)
+            .then(log => {
+                if (log) {
+                    return log
+                        .update({
+                            type: type || null,
+                            content: content || null,
+// status of all logs is TRUE by default
+                            status:  status,
+                            eventId: Number(eventId) || null,
+                            botId: Number(botId) || null,
+                            battleId: Number(battleId) || null
+                        })
+                        .then(result => {
+                            res.status(200).json(result)
+                        })
+                        .catch(next)
+                } else {
+                    res.status(400).json(null)
+                }
+            })
+            .catch(next)
+    },
+
+    findLogIdByBotId(req, res, next) {
+        const id = req.params.id;
+
+        return Log
+            .findOne({
+                where: {
+                    botId: id
+                }
+            })
+            .then(result => {
+                if (result) {
+                    res.status(200).json(result.id)
+                } else {
+                    res.status(404).json(null)
+                }
             })
             .catch(next)
     },
