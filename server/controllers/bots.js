@@ -238,7 +238,13 @@ module.exports = {
                 }
             })
             .then(bot => {
-                archivator(req, res, bot.jarFile)
+                // archivator(req, res, bot.jarFile)
+                // const name = String(req.params.name);
+                const name = bot.jarFile.split('/')[3];
+                const filePath = path.join(__dirname, '../files/replays/', name);
+                const readStream = fs.createReadStream(filePath);
+        
+                readStream.pipe(res)
             })
             .catch(next)
     },
