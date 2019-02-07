@@ -112,8 +112,6 @@ module.exports = {
                                 .then(result2 => {
                                     const currentBotsBattleRow1 = result2.rows[0].dataValues.id;
                                     const currentBotsBattleRow2 = result2.rows[1].dataValues.id;
-                                    console.log('currentBotsBattleRow1 = ', currentBotsBattleRow1);
-                                    console.log('currentBotsBattleRow2 = ', currentBotsBattleRow2);
 
                                     return BotsBattle
                                         .findByPk(currentBotsBattleRow1)
@@ -184,6 +182,64 @@ module.exports = {
                 } else {
                     res.status(400).json(`No data was provided (result of battle and/or replay file URI)`)
                 }
+            })
+            .catch(next)
+    },
+
+    replayFileUpload2(req, res, next) {
+        if (Object.keys(req.files).length == 0) {
+            return res.status(400).json('No battle replay file was provided');
+        }
+
+        const id = req.params.id;
+        const updatingResult = req.body.result;
+
+        return Battle
+            .findByPk(id)
+            .then(battle => {
+                const d = new Date(battle.dateOfBattle);
+                req.createdBattleObject = {
+                    // battleReplayFileName: String(id) + '-' + d.toISOString().split('T')[0] + '.jar',
+                    battleReplayFileName: String(id) + '-' + String(d.toISOString().split('T')[0]) + '.jar'
+                };
+                let replayFile = req.files.replayFile;
+                const replayFilePath = path.join('server/files/replays', req.createdBattleObject.battleReplayFileName);
+
+                replayFile.mv(replayFilePath, () => {
+                    req.createdBattleObject.replayFilePath = replayFilePath;
+                    req.createdBattleObject.id = id;
+                    
+                    return battle
+                        .update({
+                            replayFile: replayFilePath,
+                        })
+                        .then(result => {
+                            return BotsBattle
+                                .findAll({
+                                    where: {
+                                        battleId: result.id
+                                    }
+                                })
+                                .then(findedBattles => {
+                                    return findedBattles[0]
+                                        .update({
+                                            result: updatingResult
+                                        })
+                                        .then(resultez => {
+                                            return findedBattles[1]
+                                                .update({
+                                                    result: updatingResult
+                                                })
+                                                .then(rezultez2 => res.status(200).json({
+                                                    "updatedBotsBattle1": resultez,
+                                                    "updatedBotsBattle2": rezultez2
+                                                }))
+                                        })
+                                })
+                            // res.status(200).json(result)
+                        })
+                        .catch(next)
+                })
             })
             .catch(next)
     },

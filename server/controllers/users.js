@@ -232,6 +232,31 @@ module.exports = {
         }
     },
 
+    updateProfile2(req, res, next) {
+        let id = req.params.id;
+
+            return User
+                .findByPk(id)
+                .then(user => {
+                    if (user) {
+                        const { name, department, login, password } = req.body;
+                        
+                        return user
+                            .update({
+                                fullName: name || user.fullName,
+                                department: department || user.department,
+                                login: login || user.login,
+                                password: password || user.password
+                            })
+                            .then(updatedUser => res.status(200).json(updatedUser))
+                            .catch(next)
+                    } else {
+                        res.status(404).json('No user with provided token was found. Try to re-sign in')
+                    }
+                })
+                .catch(next)
+    },
+
     getDevKit(req, res, next) {
         const language = (req.headers && req.headers.language) || 'pYthoN';
         const fileName = language.toLowerCase() + '.zip';

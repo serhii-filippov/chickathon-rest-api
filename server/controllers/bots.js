@@ -285,6 +285,24 @@ module.exports = {
         }
     },
 
+    updateBotInfo(req, res, next) {
+        const language = req.body.language;
+        
+            return Bot
+                .findByPk(req.params.id)
+                .then(bot => {
+                    return bot
+                        .update({
+                            devLanguage: language
+                        })
+                        .then((bot2) => {
+                            res.status(200).json(bot2);
+                        })
+                        .catch(next)
+                })
+                .catch(next)
+    },
+
 // updated event rating value needs to be passed by newRating variable through request body
 // type should be real (number with floating dot), not string
     updateEventRating(req, res, next) {
